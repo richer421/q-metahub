@@ -1,6 +1,7 @@
 package model
 
 // DeployPlan 部署计划 - 完整配置包，聚合CI/CD/实例配置
+// 核心语义
 type DeployPlan struct {
 	BaseModel
 	BusinessUnitID   uint   `gorm:"column:business_unit_id;not null;index" json:"business_unit_id"`

@@ -4,9 +4,8 @@ package model
 type BusinessUnit struct {
 	BaseModel
 	Name        string `gorm:"column:name;type:varchar(64);not null" json:"name"`
-	Code        string `gorm:"column:code;type:varchar(32);uniqueIndex;not null" json:"code"`
-	RepoURL     string `gorm:"column:repo_url;type:varchar(255);not null" json:"repo_url"`
-	Description string `gorm:"column:description;type:varchar(255)" json:"description"`
+	Description string `gorm:"column:description;type:varchar(255);not null" json:"description"`
+	ProjectID   int64  `gorm:"column:project_id;not null" json:"project_id"`
 }
 
 func (BusinessUnit) TableName() string {
