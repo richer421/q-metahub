@@ -1,0 +1,12 @@
+package model
+
+// DependencyBinding 依赖绑定 - 实例配置与依赖的绑定关系
+type DependencyBinding struct {
+	BaseModel
+	InstanceConfigID uint `gorm:"column:instance_config_id;not null;index" json:"instance_config_id"`
+	DependencyID     uint `gorm:"column:dependency_id;not null;index" json:"dependency_id"`
+}
+
+func (DependencyBinding) TableName() string {
+	return "dependency_bindings"
+}
