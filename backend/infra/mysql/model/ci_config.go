@@ -19,24 +19,19 @@ func (CIConfig) TableName() string {
 }
 
 // CIConfigSpec CI配置详情
+// 一体化打包构建流程：代码拉取 → make build → docker build → 输出镜像产物
 type CIConfigSpec struct {
 	// ========== 代码拉取维度（三选一，互斥） ==========
-	RepoURL   string  `json:"repo_url"`             // 项目仓库地址
-	Branch    *string `json:"branch,omitempty"`     // 构建分支（如 main、feature/xxx）
-	Tag       *string `json:"tag,omitempty"`        // 构建标签（如 v1.0.0）
-	CommitID  *string `json:"commit_id,omitempty"`  // 构建 Commit ID（精准构建某次提交）
+	RepoURL  string  `json:"repo_url"`            // 项目仓库地址
+	Branch   *string `json:"branch,omitempty"`    // 构建分支（如 main）
+	Tag      *string `json:"tag,omitempty"`       // 构建标签（如 v1.0.0）
+	CommitID *string `json:"commit_id,omitempty"` // 构建 Commit ID
 
-	// ========== 构建配置（约定默认值） ==========
-	ArtifactOutputDir  string `json:"artifact_output_dir,omitempty"`  // 产物输出目录，默认 ./dist
-	MakefilePath       string `json:"makefile_path,omitempty"`        // Makefile路径，默认 ./Makefile
-	DockerfilePath     string `json:"dockerfile_path,omitempty"`      // Dockerfile路径，默认 ./Dockerfile
-	DockerIgnorePath   string `json:"docker_ignore_path,omitempty"`   // .dockerignore路径
-	MakeCommand        string `json:"make_command,omitempty"`         // Make执行命令，默认 build
-	DockerImage        string `json:"docker_image"`                   // Docker镜像名称+标签（必填）
-	DockerBuildContext string `json:"docker_build_context,omitempty"` // Docker构建上下文，默认 ./
-	BuildTimeout       int    `json:"build_timeout,omitempty"`        // 构建超时（分钟），默认 30
-	CleanWorkspace     bool   `json:"clean_workspace,omitempty"`      // 清理Workspace，默认 true
-	VerifyArtifact     bool   `json:"verify_artifact,omitempty"`      // 验证打包产物，默认 true
+	// ========== 构建配置 ==========
+	MakefilePath   string `json:"makefile_path,omitempty"`   // Makefile路径，默认 ./Makefile
+	MakeCommand    string `json:"make_command,omitempty"`    // 编译命令，默认 build
+	DockerfilePath string `json:"dockerfile_path,omitempty"` // Dockerfile路径，默认 ./Dockerfile
+	DockerImage    string `json:"docker_image"`              // 输出镜像产物（必填，如 registry.xxx.com/app:v1.0.0）
 }
 
 // Value 实现 driver.Valuer 接口
@@ -70,7 +65,7 @@ func (s *CIConfigSpec) ValidateRef() error {
 	}
 
 	if setCount > 1 {
-		return fmt.Errorf("仅能设置 Branch/Tag/CommitID 中的一个，不可同时设置")
+		return fmt.Errorf("仅能设置 Branch/Tag/CommitID 中的一个")
 	}
 	if setCount == 0 {
 		return fmt.Errorf("必须设置 Branch/Tag/CommitID 中的一个")
