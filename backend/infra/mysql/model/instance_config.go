@@ -11,14 +11,13 @@ import (
 )
 
 // InstanceConfig 实例配置 - 运行态配置
-// 前端配置本质是 yaml 的 UI 化，这里直接存 K8s 原生结构
+// 前端配置本质是 YAML 的 UI 化，这里直接存 K8s 原生结构
 type InstanceConfig struct {
 	BaseModel
-	Name         string        `gorm:"column:name;type:varchar(64);not null" json:"name"`
-	Env          string        `gorm:"column:env;type:varchar(32);not null;index" json:"env"` // dev/test/gray/prod
-	ClusterID    int64         `gorm:"column:cluster_id;not null;index" json:"cluster_id"`
-	InstanceType string        `gorm:"column:instance_type;type:varchar(32);not null" json:"instance_type"` // deployment/statefulset/job/cronjob
-	Spec         InstanceSpec  `gorm:"column:spec;type:json;not null" json:"spec"`                         // K8s 原生 Spec
+	Name         string       `gorm:"column:name;type:varchar(64);not null" json:"name"`
+	Env          string       `gorm:"column:env;type:varchar(32);not null;index" json:"env"`               // dev/test/gray/prod
+	InstanceType string       `gorm:"column:instance_type;type:varchar(32);not null" json:"instance_type"` // deployment/statefulset/job/cronjob
+	Spec         InstanceSpec `gorm:"column:spec;type:json;not null" json:"spec"`                          // K8s 原生 Spec
 }
 
 func (InstanceConfig) TableName() string {
