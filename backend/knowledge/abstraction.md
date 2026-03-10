@@ -39,11 +39,9 @@
 
 - **CD配置**：部署相关配置，定义���署策略、渲染引擎、工作引擎等。
 
-- **实例配置**：运行态配置，包含环境配置、资源配额和依赖绑定的组合。
+- **实例配置**：运行态配置，存储 K8s 原生 Spec（Deployment/StatefulSet/Job/CronJob），前端配置本质是 YAML 的 UI 化。
 
 - **依赖**：实例运行所需的中间件与基础能力，如 MySQL、Redis、消息队列等。
-
-- **资源**：支撑实例运行的基础设施，包括 CPU、内存、存储、网络。
 
 ## 静态结构
 
@@ -67,8 +65,12 @@
             └── 实例配置（InstanceConfig）
                     │
                     ├── 环境配置（dev/test/gray/prod）
-                    ├── 资源配额（CPU/内存/存储/网络）
-                    └── 依赖绑定（MySQL/Redis/MQ...）
+                    ├── 实例类型（deployment/statefulset/job/cronjob）
+                    └── Spec（K8s 原生结构，JSON 存储）
+                            ├── DeploymentSpec
+                            ├── StatefulSetSpec
+                            ├── JobSpec
+                            └── CronJobSpec
 ```
 
 ## 动态流转
