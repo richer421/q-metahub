@@ -12,7 +12,16 @@ func main() {
 		Mode:    gen.WithDefaultQuery,
 	})
 
-	g.ApplyBasic(model.HelloWorld{})
+	g.ApplyBasic(
+		model.Project{},
+		model.BusinessUnit{},
+		model.CIConfig{},
+		model.CDConfig{},
+		model.InstanceConfig{},
+		model.DeployPlan{},
+		model.Dependency{},
+		model.DependencyBinding{},
+	)
 
 	g.Execute()
 }

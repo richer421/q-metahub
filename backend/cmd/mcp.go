@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/richer421/q-metahub/conf"
 	"github.com/richer421/q-metahub/infra/mysql"
 	"github.com/richer421/q-metahub/pkg/logger"
 	"github.com/richer421/q-metahub/pkg/mcp"
@@ -14,7 +13,7 @@ var mcpCmd = &cobra.Command{
 	Short: "Start MCP server for Claude integration",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Initialize MySQL (required for app layer)
-		if err := mysql.Init(conf.C.MySQL); err != nil {
+		if err := mysql.Init(); err != nil {
 			logger.Fatalf("mysql init failed: %v", err)
 		}
 

@@ -16,34 +16,69 @@ import (
 )
 
 var (
-	Q          = new(Query)
-	HelloWorld *helloWorld
+	Q                 = new(Query)
+	BusinessUnit      *businessUnit
+	CDConfig          *cDConfig
+	CIConfig          *cIConfig
+	Dependency        *dependency
+	DependencyBinding *dependencyBinding
+	DeployPlan        *deployPlan
+	InstanceConfig    *instanceConfig
+	Project           *project
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
-	HelloWorld = &Q.HelloWorld
+	BusinessUnit = &Q.BusinessUnit
+	CDConfig = &Q.CDConfig
+	CIConfig = &Q.CIConfig
+	Dependency = &Q.Dependency
+	DependencyBinding = &Q.DependencyBinding
+	DeployPlan = &Q.DeployPlan
+	InstanceConfig = &Q.InstanceConfig
+	Project = &Q.Project
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:         db,
-		HelloWorld: newHelloWorld(db, opts...),
+		db:                db,
+		BusinessUnit:      newBusinessUnit(db, opts...),
+		CDConfig:          newCDConfig(db, opts...),
+		CIConfig:          newCIConfig(db, opts...),
+		Dependency:        newDependency(db, opts...),
+		DependencyBinding: newDependencyBinding(db, opts...),
+		DeployPlan:        newDeployPlan(db, opts...),
+		InstanceConfig:    newInstanceConfig(db, opts...),
+		Project:           newProject(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	HelloWorld helloWorld
+	BusinessUnit      businessUnit
+	CDConfig          cDConfig
+	CIConfig          cIConfig
+	Dependency        dependency
+	DependencyBinding dependencyBinding
+	DeployPlan        deployPlan
+	InstanceConfig    instanceConfig
+	Project           project
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		HelloWorld: q.HelloWorld.clone(db),
+		db:                db,
+		BusinessUnit:      q.BusinessUnit.clone(db),
+		CDConfig:          q.CDConfig.clone(db),
+		CIConfig:          q.CIConfig.clone(db),
+		Dependency:        q.Dependency.clone(db),
+		DependencyBinding: q.DependencyBinding.clone(db),
+		DeployPlan:        q.DeployPlan.clone(db),
+		InstanceConfig:    q.InstanceConfig.clone(db),
+		Project:           q.Project.clone(db),
 	}
 }
 
@@ -57,18 +92,39 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		HelloWorld: q.HelloWorld.replaceDB(db),
+		db:                db,
+		BusinessUnit:      q.BusinessUnit.replaceDB(db),
+		CDConfig:          q.CDConfig.replaceDB(db),
+		CIConfig:          q.CIConfig.replaceDB(db),
+		Dependency:        q.Dependency.replaceDB(db),
+		DependencyBinding: q.DependencyBinding.replaceDB(db),
+		DeployPlan:        q.DeployPlan.replaceDB(db),
+		InstanceConfig:    q.InstanceConfig.replaceDB(db),
+		Project:           q.Project.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	HelloWorld *helloWorldDo
+	BusinessUnit      *businessUnitDo
+	CDConfig          *cDConfigDo
+	CIConfig          *cIConfigDo
+	Dependency        *dependencyDo
+	DependencyBinding *dependencyBindingDo
+	DeployPlan        *deployPlanDo
+	InstanceConfig    *instanceConfigDo
+	Project           *projectDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		HelloWorld: q.HelloWorld.WithContext(ctx),
+		BusinessUnit:      q.BusinessUnit.WithContext(ctx),
+		CDConfig:          q.CDConfig.WithContext(ctx),
+		CIConfig:          q.CIConfig.WithContext(ctx),
+		Dependency:        q.Dependency.WithContext(ctx),
+		DependencyBinding: q.DependencyBinding.WithContext(ctx),
+		DeployPlan:        q.DeployPlan.WithContext(ctx),
+		InstanceConfig:    q.InstanceConfig.WithContext(ctx),
+		Project:           q.Project.WithContext(ctx),
 	}
 }
 

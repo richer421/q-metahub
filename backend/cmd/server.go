@@ -47,7 +47,7 @@ func initInfra() {
 	closers = append(closers, namedCloser{"otel", func() error { return otelShutdown(context.Background()) }})
 
 	// MySQL
-	if err := inframysql.Init(conf.C.MySQL); err != nil {
+	if err := inframysql.Init(); err != nil {
 		logger.Fatalf("mysql init: %s", err)
 	}
 	closers = append(closers, namedCloser{"mysql", inframysql.Close})

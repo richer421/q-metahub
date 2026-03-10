@@ -14,59 +14,64 @@ import (
 
 var DB *gorm.DB
 
-func Init(cfg conf.MySQLConfig) error {
-	// 先连接到 mysql 服务器（不指定数据库），创建数据库（如果不存在）
-	createDB, err := gorm.Open(mysql.Open(cfg.DSNWithoutDB()), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-	sqlCreateDB, err := createDB.DB()
-	if err != nil {
-		return err
-	}
-	defer sqlCreateDB.Close()
-
-	if err := createDB.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", cfg.Database)).Error; err != nil {
-		return err
+// Init 初始化数据库连接
+func Init() error {
+	if DB != nil {
+		return nil
 	}
 
-	// 连接到指定数据库
-	DB, err = gorm.Open(mysql.Open(cfg.DSN()), &gorm.Config{})
-	if err != nil {
-		return err
+	if conf.C.MySQL.Database == "" {
+		return fmt.Errorf("database config is required")
 	}
 
+	dsn := conf.C.MySQL.DSN()
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return fmt.Errorf("failed to connect database: %w", err)
+	}
+
+	// 添加 OTel 插件
+	if err := db.Use(otelgorm.NewPlugin()); err != nil {
+		return fmt.Errorf("failed to add otelgorm plugin: %w", err)
+	}
+
+	// ���接到指定数据库
+	err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", conf.C.MySQL.Database)).Error
+	if err != nil {
+		return fmt.Errorf("create database failed: %w", err)
+	}
+
+	// 自动迁移表结构
+	err = db.AutoMigrate(
+		&model.Project{},
+		&model.BusinessUnit{},
+		&model.CIConfig{},
+		&model.CDConfig{},
+		&model.InstanceConfig{},
+		&model.DeployPlan{},
+		&model.Dependency{},
+		&model.DependencyBinding{},
+	)
+	if err != nil {
+		return fmt.Errorf("auto migrate failed: %w", err)
+	}
+
+	// 设置 DAO 使用的 DB
+	dao.SetDefault(db)
+
+	DB = db
+
+	return nil
+}
+
+// Close 关闭数据库连接
+func Close() error {
+	if DB == nil {
+		return nil
+	}
 	sqlDB, err := DB.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to close database: %w", err)
 	}
-	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
-
-	if err := DB.Use(otelgorm.NewPlugin()); err != nil {
-		return err
-	}
-
-	dao.SetDefault(DB)
-	return nil
-}
-
-func Migrate() error {
-	if DB == nil {
-		return gorm.ErrInvalidDB
-	}
-	return DB.AutoMigrate(
-		&model.HelloWorld{},
-	)
-}
-
-func Close() error {
-	if DB != nil {
-		sqlDB, err := DB.DB()
-		if err != nil {
-			return err
-		}
-		return sqlDB.Close()
-	}
-	return nil
+	return sqlDB.Close()
 }
