@@ -7,10 +7,10 @@ import (
 )
 
 // CIConfig CI配置 - 代码构建相关配置
-// 核心改进：拆分代码拉取维度（Branch/Tag/CommitID 三选一，互斥）
+// 核心设计：代码拉取维度（Branch/Tag/CommitID 三选一，互斥）
 type CIConfig struct {
 	BaseModel
-	Name string `gorm:"column:name;type:varchar(64);not null" json:"name"`
+	Name string       `gorm:"column:name;type:varchar(64);not null" json:"name"`
 	Spec CIConfigSpec `gorm:"column:spec;type:json;not null" json:"spec"`
 }
 
@@ -20,17 +20,11 @@ func (CIConfig) TableName() string {
 
 // CIConfigSpec CI配置详情
 type CIConfigSpec struct {
-	// ========== 基础必选信息（拉取代码） ==========
-	RepoURL string `json:"repo_url"` // 项目仓库地址
-
-	// ========== 细化的代码拉取维度（三选一，互斥） ==========
-	Branch   *string `json:"branch,omitempty"`   // 构建分支（如 main、feature/xxx）
-	Tag      *string `json:"tag,omitempty"`      // 构建标签（如 v1.0.0）
-	CommitID *string `json:"commit_id,omitempty"` // 构建 Commit ID（精准构建某次提交）
-
-	// ========== 兼容字段（废弃） ==========
-	// Deprecated: 建议使用 Branch/Tag/CommitID
-	TargetRef string `json:"target_ref,omitempty"`
+	// ========== 代码拉取维度（三选一，互斥） ==========
+	RepoURL   string  `json:"repo_url"`             // 项目仓库地址
+	Branch    *string `json:"branch,omitempty"`     // 构建分支（如 main、feature/xxx）
+	Tag       *string `json:"tag,omitempty"`        // 构建标签（如 v1.0.0）
+	CommitID  *string `json:"commit_id,omitempty"`  // 构建 Commit ID（精准构建某次提交）
 
 	// ========== 构建配置（约定默认值） ==========
 	ArtifactOutputDir  string `json:"artifact_output_dir,omitempty"`  // 产物输出目录，默认 ./dist
@@ -78,8 +72,8 @@ func (s *CIConfigSpec) ValidateRef() error {
 	if setCount > 1 {
 		return fmt.Errorf("仅能设置 Branch/Tag/CommitID 中的一个，不可同时设置")
 	}
-	if setCount == 0 && s.TargetRef == "" {
-		return fmt.Errorf("必须设置 Branch/Tag/CommitID 中的一个，或设置兼容字段 TargetRef")
+	if setCount == 0 {
+		return fmt.Errorf("必须设置 Branch/Tag/CommitID 中的一个")
 	}
 	return nil
 }
@@ -94,13 +88,6 @@ func (s *CIConfigSpec) GetRef() (refType string, refValue string) {
 	}
 	if s.CommitID != nil && *s.CommitID != "" {
 		return "commit", *s.CommitID
-	}
-	if s.TargetRef != "" {
-		// 简单判断是否为标签（以v开头）
-		if len(s.TargetRef) > 0 && s.TargetRef[0] == 'v' {
-			return "tag", s.TargetRef
-		}
-		return "branch", s.TargetRef
 	}
 	return "", ""
 }
