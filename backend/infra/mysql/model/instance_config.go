@@ -14,10 +14,11 @@ import (
 // 前端配置本质是 YAML 的 UI 化，这里直接存 K8s 原生结构
 type InstanceConfig struct {
 	BaseModel
-	Name           string                 `gorm:"column:name;type:varchar(64);not null" json:"name"`
-	Env            string                 `gorm:"column:env;type:varchar(32);not null;index" json:"env"`               // dev/test/gray/prod
-	InstanceType   string                 `gorm:"column:instance_type;type:varchar(32);not null" json:"instance_type"` // deployment/statefulset/job/cronjob/pod
-	Spec           InstanceSpec           `gorm:"column:spec;type:json;not null" json:"spec"`                          // K8s 原生工作负载 Spec
+	Name            string                 `gorm:"column:name;type:varchar(64);not null" json:"name"`
+	BusinessUnitID  int64                  `gorm:"column:business_unit_id;not null;index" json:"business_unit_id"`          // 关联业务单元
+	Env             string                 `gorm:"column:env;type:varchar(32);not null;index" json:"env"`               // dev/test/gray/prod
+	InstanceType    string                 `gorm:"column:instance_type;type:varchar(32);not null" json:"instance_type"` // deployment/statefulset/job/cronjob/pod
+	Spec            InstanceSpec           `gorm:"column:spec;type:json;not null" json:"spec"`                          // K8s 原生工作负载 Spec
 	AttachResources InstanceAttachResources `gorm:"column:attach_resources;type:json;default:'{}'" json:"attach_resources"` // 配套附加资源（ConfigMap/Secret/Service）
 }
 

@@ -31,6 +31,7 @@ func newCDConfig(db *gorm.DB, opts ...gen.DOOption) cDConfig {
 	_cDConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_cDConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_cDConfig.Name = field.NewString(tableName, "name")
+	_cDConfig.BusinessUnitID = field.NewInt64(tableName, "business_unit_id")
 	_cDConfig.RenderEngine = field.NewString(tableName, "render_engine")
 	_cDConfig.ValuesYAML = field.NewString(tableName, "values_yaml")
 	_cDConfig.ReleaseStrategy = field.NewField(tableName, "release_strategy")
@@ -48,6 +49,7 @@ type cDConfig struct {
 	CreatedAt       field.Time
 	UpdatedAt       field.Time
 	Name            field.String
+	BusinessUnitID  field.Int64
 	RenderEngine    field.String
 	ValuesYAML      field.String
 	ReleaseStrategy field.Field
@@ -71,6 +73,7 @@ func (c *cDConfig) updateTableName(table string) *cDConfig {
 	c.CreatedAt = field.NewTime(table, "created_at")
 	c.UpdatedAt = field.NewTime(table, "updated_at")
 	c.Name = field.NewString(table, "name")
+	c.BusinessUnitID = field.NewInt64(table, "business_unit_id")
 	c.RenderEngine = field.NewString(table, "render_engine")
 	c.ValuesYAML = field.NewString(table, "values_yaml")
 	c.ReleaseStrategy = field.NewField(table, "release_strategy")
@@ -98,11 +101,12 @@ func (c *cDConfig) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (c *cDConfig) fillFieldMap() {
-	c.fieldMap = make(map[string]field.Expr, 7)
+	c.fieldMap = make(map[string]field.Expr, 8)
 	c.fieldMap["id"] = c.ID
 	c.fieldMap["created_at"] = c.CreatedAt
 	c.fieldMap["updated_at"] = c.UpdatedAt
 	c.fieldMap["name"] = c.Name
+	c.fieldMap["business_unit_id"] = c.BusinessUnitID
 	c.fieldMap["render_engine"] = c.RenderEngine
 	c.fieldMap["values_yaml"] = c.ValuesYAML
 	c.fieldMap["release_strategy"] = c.ReleaseStrategy

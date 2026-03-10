@@ -31,6 +31,7 @@ func newInstanceConfig(db *gorm.DB, opts ...gen.DOOption) instanceConfig {
 	_instanceConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_instanceConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_instanceConfig.Name = field.NewString(tableName, "name")
+	_instanceConfig.BusinessUnitID = field.NewInt64(tableName, "business_unit_id")
 	_instanceConfig.Env = field.NewString(tableName, "env")
 	_instanceConfig.InstanceType = field.NewString(tableName, "instance_type")
 	_instanceConfig.Spec = field.NewField(tableName, "spec")
@@ -49,6 +50,7 @@ type instanceConfig struct {
 	CreatedAt       field.Time
 	UpdatedAt       field.Time
 	Name            field.String
+	BusinessUnitID  field.Int64
 	Env             field.String
 	InstanceType    field.String
 	Spec            field.Field
@@ -73,6 +75,7 @@ func (i *instanceConfig) updateTableName(table string) *instanceConfig {
 	i.CreatedAt = field.NewTime(table, "created_at")
 	i.UpdatedAt = field.NewTime(table, "updated_at")
 	i.Name = field.NewString(table, "name")
+	i.BusinessUnitID = field.NewInt64(table, "business_unit_id")
 	i.Env = field.NewString(table, "env")
 	i.InstanceType = field.NewString(table, "instance_type")
 	i.Spec = field.NewField(table, "spec")
@@ -105,11 +108,12 @@ func (i *instanceConfig) GetFieldByName(fieldName string) (field.OrderExpr, bool
 }
 
 func (i *instanceConfig) fillFieldMap() {
-	i.fieldMap = make(map[string]field.Expr, 8)
+	i.fieldMap = make(map[string]field.Expr, 9)
 	i.fieldMap["id"] = i.ID
 	i.fieldMap["created_at"] = i.CreatedAt
 	i.fieldMap["updated_at"] = i.UpdatedAt
 	i.fieldMap["name"] = i.Name
+	i.fieldMap["business_unit_id"] = i.BusinessUnitID
 	i.fieldMap["env"] = i.Env
 	i.fieldMap["instance_type"] = i.InstanceType
 	i.fieldMap["spec"] = i.Spec
