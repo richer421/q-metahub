@@ -3,19 +3,31 @@ package mcp
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
+	appmetadata "github.com/richer421/q-metahub/app/metadata"
 	"github.com/richer421/q-metahub/conf"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type Server struct{}
+type toolSpec struct {
+	Name        string
+	Description string
+	Register    func(*mcp.Server)
+}
+
+type Server struct {
+	metadataSvc *appmetadata.Service
+}
 
 func NewServer() *Server {
-	return &Server{}
+	return &Server{
+		metadataSvc: appmetadata.NewService(),
+	}
 }
 
 func (s *Server) Run() error {
@@ -52,6 +64,88 @@ func (s *Server) registerTools(server *mcp.Server) {
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
 	})
+
+	for _, spec := range s.metadataToolSpecs() {
+		spec.Register(server)
+	}
+}
+
+func (s *Server) metadataToolSpecs() []toolSpec {
+	return []toolSpec{
+		{
+			Name:        "seed_demo_setup",
+			Description: "Create or return the q-demo demo metadata setup",
+			Register: func(server *mcp.Server) {
+				mcp.AddTool(server, &mcp.Tool{
+					Name:        "seed_demo_setup",
+					Description: "Create or return the q-demo demo metadata setup",
+				}, func(ctx context.Context, req *mcp.CallToolRequest, args struct{}) (*mcp.CallToolResult, any, error) {
+					res, err := s.metadataSvc.SeedDemoSetup(ctx)
+					if err != nil {
+						return s.errorResult(err), nil, nil
+					}
+					out, err := s.jsonResult(res)
+					return out, nil, err
+				})
+			},
+		},
+		{
+			Name:        "get_deploy_plan",
+			Description: "Get a deploy plan by ID",
+			Register: func(server *mcp.Server) {
+				type args struct {
+					DeployPlanID int64 `json:"deploy_plan_id"`
+				}
+				mcp.AddTool(server, &mcp.Tool{
+					Name:        "get_deploy_plan",
+					Description: "Get deploy plan full spec by deploy plan ID",
+				}, func(ctx context.Context, req *mcp.CallToolRequest, in args) (*mcp.CallToolResult, any, error) {
+					res, err := s.metadataSvc.GetDeployPlanFullSpec(ctx, in.DeployPlanID)
+					if err != nil {
+						return s.errorResult(err), nil, nil
+					}
+					out, err := s.jsonResult(res)
+					return out, nil, err
+				})
+			},
+		},
+		{
+			Name:        "get_business_unit_full_spec",
+			Description: "Get business unit full spec by business unit ID",
+			Register: func(server *mcp.Server) {
+				type args struct {
+					BusinessUnitID int64 `json:"business_unit_id"`
+				}
+				mcp.AddTool(server, &mcp.Tool{
+					Name:        "get_business_unit_full_spec",
+					Description: "Get business unit full spec by business unit ID",
+				}, func(ctx context.Context, req *mcp.CallToolRequest, in args) (*mcp.CallToolResult, any, error) {
+					res, err := s.metadataSvc.GetBusinessUnitFullSpec(ctx, in.BusinessUnitID)
+					if err != nil {
+						return s.errorResult(err), nil, nil
+					}
+					out, err := s.jsonResult(res)
+					return out, nil, err
+				})
+			},
+		},
+	}
+}
+
+func (s *Server) jsonResult(v any) (*mcp.CallToolResult, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: string(data)}},
+	}, nil
+}
+
+func (s *Server) errorResult(err error) *mcp.CallToolResult {
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf(`{"error":%q}`, err.Error())}},
+	}
 }
 
 func (s *Server) handleReadLogs(lines int) (string, error) {

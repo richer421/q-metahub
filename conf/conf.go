@@ -90,25 +90,5 @@ func Load(path string) error {
 	if err := yaml.Unmarshal(data, &C); err != nil {
 		return err
 	}
-	applyEnvOverrides()
 	return nil
-}
-
-// applyEnvOverrides 从环境变量覆盖配置（用于 Docker 部署）
-func applyEnvOverrides() {
-	if v := os.Getenv("MYSQL_HOST"); v != "" {
-		C.MySQL.Host = v
-	}
-	if v := os.Getenv("REDIS_ADDR"); v != "" {
-		C.Redis.Addr = v
-	}
-	if v := os.Getenv("KAFKA_BROKERS"); v != "" {
-		C.Kafka.Brokers = []string{v}
-	}
-	if v := os.Getenv("OTEL_ENDPOINT"); v != "" {
-		C.OTel.Endpoint = v
-	}
-	if v := os.Getenv("OTEL_ENABLED"); v == "true" {
-		C.OTel.Enabled = true
-	}
 }
