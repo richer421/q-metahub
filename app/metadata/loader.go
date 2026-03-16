@@ -13,7 +13,7 @@ type businessUnitAggregate struct {
 	businessUnit    *model.BusinessUnit
 	ciConfigs       []*model.CIConfig
 	cdConfigs       []*model.CDConfig
-	instanceConfigs []*model.InstanceConfig
+	instanceConfigs []*model.InstanceOAM
 	deployPlans     []*model.DeployPlan
 }
 
@@ -34,7 +34,7 @@ func loadBusinessUnitAggregate(ctx context.Context, businessUnitID int64) (*busi
 	if err != nil {
 		return nil, err
 	}
-	instanceConfigs, err := dao.Q.WithContext(ctx).InstanceConfig.Where(dao.InstanceConfig.BusinessUnitID.Eq(businessUnitID)).Find()
+	instanceConfigs, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.BusinessUnitID.Eq(businessUnitID)).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ type deployPlanAggregate struct {
 	businessUnit   *model.BusinessUnit
 	ciConfig       *model.CIConfig
 	cdConfig       *model.CDConfig
-	instanceConfig *model.InstanceConfig
+	instanceConfig *model.InstanceOAM
 	deployPlan     *model.DeployPlan
 }
 
@@ -94,7 +94,7 @@ func loadDeployPlanAggregate(ctx context.Context, deployPlanID int64) (*deployPl
 	if err != nil {
 		return nil, err
 	}
-	instanceConfig, err := dao.Q.WithContext(ctx).InstanceConfig.Where(dao.InstanceConfig.ID.Eq(deployPlan.InstanceConfigID)).First()
+	instanceConfig, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(deployPlan.InstanceConfigID)).First()
 	if err != nil {
 		return nil, err
 	}

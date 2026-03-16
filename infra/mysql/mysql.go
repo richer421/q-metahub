@@ -47,13 +47,20 @@ func Init() error {
 		&model.BusinessUnit{},
 		&model.CIConfig{},
 		&model.CDConfig{},
-		&model.InstanceConfig{},
+		&model.InstanceOAM{},
 		&model.DeployPlan{},
 		&model.Dependency{},
 		&model.DependencyBinding{},
 	)
 	if err != nil {
 		return fmt.Errorf("auto migrate failed: %w", err)
+	}
+
+	// 移除已废弃的旧实例配置表（instance_configs）。
+	if db.Migrator().HasTable("instance_configs") {
+		if err := db.Migrator().DropTable("instance_configs"); err != nil {
+			return fmt.Errorf("drop deprecated table instance_configs failed: %w", err)
+		}
 	}
 
 	// 设置 DAO 使用的 DB

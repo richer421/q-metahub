@@ -63,7 +63,7 @@ func (s *Service) CreateDeployPlanAggregate(ctx context.Context, req *vo.CreateD
 		if err != nil {
 			return err
 		}
-		if err := q.InstanceConfig.Create(instanceConfig); err != nil {
+		if err := q.InstanceOAM.Create(instanceConfig); err != nil {
 			return err
 		}
 

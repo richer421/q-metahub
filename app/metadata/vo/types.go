@@ -32,9 +32,9 @@ type CreateCDConfigReq struct {
 type CreateInstanceConfigReq struct {
 	Name            string         `json:"name"`
 	Env             string         `json:"env"`
-	InstanceType    string         `json:"instance_type"`
-	Spec            map[string]any `json:"spec"`
-	AttachResources map[string]any `json:"attach_resources"`
+	SchemaVersion   string         `json:"schema_version"`
+	OAMApplication  map[string]any `json:"oam_application"`
+	FrontendPayload map[string]any `json:"frontend_payload"`
 }
 
 type CreateDeployPlanReq struct {
@@ -100,9 +100,9 @@ type InstanceConfigDTO struct {
 	Name            string         `json:"name"`
 	BusinessUnitID  int64          `json:"business_unit_id"`
 	Env             string         `json:"env"`
-	InstanceType    string         `json:"instance_type"`
-	Spec            map[string]any `json:"spec"`
-	AttachResources map[string]any `json:"attach_resources"`
+	SchemaVersion   string         `json:"schema_version"`
+	OAMApplication  map[string]any `json:"oam_application"`
+	FrontendPayload map[string]any `json:"frontend_payload"`
 }
 
 type DeployPlanDTO struct {

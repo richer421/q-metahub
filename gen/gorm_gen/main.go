@@ -17,7 +17,7 @@ func main() {
 		model.BusinessUnit{},
 		model.CIConfig{},
 		model.CDConfig{},
-		model.InstanceConfig{},
+		model.InstanceOAM{},
 		model.DeployPlan{},
 		model.Dependency{},
 		model.DependencyBinding{},

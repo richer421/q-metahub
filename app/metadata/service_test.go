@@ -78,21 +78,26 @@ func TestServiceCreateDeployPlanAggregate(t *testing.T) {
 			},
 		},
 		InstanceConfig: vo.CreateInstanceConfigReq{
-			Name:         "q-demo-dev",
-			Env:          "dev",
-			InstanceType: "deployment",
-			Spec: map[string]any{
-				"deployment": map[string]any{
-					"selector": map[string]any{
-						"matchLabels": map[string]any{"app": "q-demo"},
+			Name:          "q-demo-dev",
+			Env:           "dev",
+			SchemaVersion: "v1alpha1",
+			OAMApplication: map[string]any{
+				"apiVersion": "q.oam/v1alpha1",
+				"kind":       "InstanceApplication",
+				"component": map[string]any{
+					"name": "q-demo",
+					"type": "pod",
+					"properties": map[string]any{
+						"mainContainer": map[string]any{
+							"name":  "q-demo",
+							"image": "IMAGE",
+						},
 					},
 				},
 			},
-			AttachResources: map[string]any{
-				"services": map[string]any{
-					"q-demo": map[string]any{
-						"metadata": map[string]any{"name": "q-demo"},
-					},
+			FrontendPayload: map[string]any{
+				"basic": map[string]any{
+					"name": "q-demo-dev",
 				},
 			},
 		},
@@ -115,8 +120,8 @@ func TestServiceCreateDeployPlanAggregate(t *testing.T) {
 	mock.ExpectExec("INSERT INTO `cd_configs`").
 		WithArgs(anyTime(), anyTime(), createReq.CDConfig.Name, int64(2), createReq.CDConfig.RenderEngine, createReq.CDConfig.ValuesYAML, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(4, 1))
-	mock.ExpectExec("INSERT INTO `instance_configs`").
-		WithArgs(anyTime(), anyTime(), createReq.InstanceConfig.Name, int64(2), createReq.InstanceConfig.Env, createReq.InstanceConfig.InstanceType, sqlmock.AnyArg(), sqlmock.AnyArg()).
+	mock.ExpectExec("INSERT INTO `instance_oams`").
+		WithArgs(anyTime(), anyTime(), createReq.InstanceConfig.Name, int64(2), createReq.InstanceConfig.Env, createReq.InstanceConfig.SchemaVersion, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 	mock.ExpectExec("INSERT INTO `deploy_plans`").
 		WithArgs(anyTime(), anyTime(), createReq.DeployPlan.Name, createReq.DeployPlan.Description, int64(2), int64(3), int64(4), int64(5)).
@@ -171,12 +176,12 @@ func TestServiceGetBusinessUnitFullSpec(t *testing.T) {
 	cdRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "render_engine", "values_yaml", "release_strategy", "git_ops"}).
 		AddRow(4, time.Now(), time.Now(), "q-demo-cd", 2, "helm", "replicaCount: 1\n", releaseStrategy, gitOps)
 
-	instanceSpec, err := json.Marshal(map[string]any{"deployment": map[string]any{}})
+	oamApplication, err := json.Marshal(map[string]any{"component": map[string]any{"type": "pod"}})
 	require.NoError(t, err)
-	attachResources, err := json.Marshal(map[string]any{"services": map[string]any{"q-demo": map[string]any{"metadata": map[string]any{"name": "q-demo"}}}})
+	frontendPayload, err := json.Marshal(map[string]any{"basic": map[string]any{"name": "q-demo-dev"}})
 	require.NoError(t, err)
-	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "instance_type", "spec", "attach_resources"}).
-		AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "deployment", instanceSpec, attachResources)
+	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
+		AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "v1alpha1", oamApplication, frontendPayload)
 
 	deployPlanRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
 		AddRow(6, time.Now(), time.Now(), "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5)
@@ -189,7 +194,7 @@ func TestServiceGetBusinessUnitFullSpec(t *testing.T) {
 		WillReturnRows(ciRows)
 	mock.ExpectQuery("SELECT \\* FROM `cd_configs` WHERE `cd_configs`.`business_unit_id` = .*").
 		WillReturnRows(cdRows)
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`business_unit_id` = .*").
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`business_unit_id` = .*").
 		WillReturnRows(instanceRows)
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`business_unit_id` = .*").
 		WillReturnRows(deployPlanRows)
@@ -239,15 +244,9 @@ func TestServiceGetDeployPlanFullSpec(t *testing.T) {
 		"manifest_root": "manifests",
 	})
 	require.NoError(t, err)
-	instanceSpec, err := json.Marshal(map[string]any{"deployment": map[string]any{}})
+	oamApplication, err := json.Marshal(map[string]any{"component": map[string]any{"type": "pod"}})
 	require.NoError(t, err)
-	attachResources, err := json.Marshal(map[string]any{
-		"services": map[string]any{
-			"q-demo": map[string]any{
-				"metadata": map[string]any{"name": "q-demo"},
-			},
-		},
-	})
+	frontendPayload, err := json.Marshal(map[string]any{"basic": map[string]any{"name": "q-demo-dev"}})
 	require.NoError(t, err)
 
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`id` = .*").
@@ -273,11 +272,11 @@ func TestServiceGetDeployPlanFullSpec(t *testing.T) {
 			"id", "created_at", "updated_at", "name", "business_unit_id",
 			"render_engine", "values_yaml", "release_strategy", "git_ops",
 		}).AddRow(4, now, now, "q-demo-cd", 2, "helm", "replicaCount: 1\n", releaseStrategy, gitOps))
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`id` = .*").
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`id` = .*").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "created_at", "updated_at", "name", "business_unit_id",
-			"env", "instance_type", "spec", "attach_resources",
-		}).AddRow(5, now, now, "q-demo-dev", 2, "dev", "deployment", instanceSpec, attachResources))
+			"env", "schema_version", "oam_application", "frontend_payload",
+		}).AddRow(5, now, now, "q-demo-dev", 2, "dev", "v1alpha1", oamApplication, frontendPayload))
 
 	res, err := svc.GetDeployPlanFullSpec(t.Context(), 6)
 	require.NoError(t, err)
@@ -304,8 +303,8 @@ func TestServiceSeedDemoSetupIsIdempotent(t *testing.T) {
 		AddRow(3, time.Now(), time.Now(), "q-demo-ci", 2, "harbor.local", "q-demo/q-demo", []byte(`{"type":"commit"}`), []byte(`{"branch":"main"}`))
 	cdRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "render_engine", "values_yaml", "release_strategy", "git_ops"}).
 		AddRow(4, time.Now(), time.Now(), "q-demo-cd", 2, "helm", "replicaCount: 1\n", []byte(`{"deployment_mode":"rolling","batch_rule":{"batch_count":1,"batch_ratio":[1],"trigger_type":"auto","interval":0}}`), []byte(`{"enabled":true,"repo_url":"https://github.com/richer421/q-demo-gitops.git","branch":"main","app_root":"apps","manifest_root":"manifests"}`))
-	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "instance_type", "spec", "attach_resources"}).
-		AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "deployment", []byte(`{"deployment":{}}`), []byte(`{"services":{"q-demo":{"metadata":{"name":"q-demo"}}}}`))
+	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
+		AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`))
 	deployPlanRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
 		AddRow(6, time.Now(), time.Now(), "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5)
 
@@ -323,7 +322,7 @@ func TestServiceSeedDemoSetupIsIdempotent(t *testing.T) {
 		WillReturnRows(ciRows)
 	mock.ExpectQuery("SELECT \\* FROM `cd_configs` WHERE `cd_configs`.`business_unit_id` = .*").
 		WillReturnRows(cdRows)
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`business_unit_id` = .*").
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`business_unit_id` = .*").
 		WillReturnRows(instanceRows)
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`business_unit_id` = .*").
 		WillReturnRows(deployPlanRows)
@@ -334,11 +333,11 @@ func TestServiceSeedDemoSetupIsIdempotent(t *testing.T) {
 	mock.ExpectExec("INSERT INTO `ci_configs`").
 		WithArgs(anyTime(), anyTime(), "q-demo-ci", int64(2), defaultDemoImageRegistry, "q-demo/q-demo", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(3), anyTime()).
 		WillReturnResult(sqlmock.NewResult(3, 1))
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`id` = .*").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "instance_type", "spec", "attach_resources"}).
-			AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "deployment", []byte(`{"deployment":{}}`), []byte(`{"services":{"q-demo":{"metadata":{"name":"q-demo"}}}}`)))
-	mock.ExpectExec("INSERT INTO `instance_configs`").
-		WithArgs(anyTime(), anyTime(), "q-demo-dev", int64(2), "dev", "deployment", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(5), anyTime()).
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`id` = .*").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
+			AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`)))
+	mock.ExpectExec("INSERT INTO `instance_oams`").
+		WithArgs(anyTime(), anyTime(), "q-demo-dev", int64(2), "dev", "v1alpha1", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(5), anyTime()).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 	mock.ExpectCommit()
 
@@ -362,8 +361,8 @@ func TestServiceSeedDemoSetupReconcilesDemoCIRegistry(t *testing.T) {
 		AddRow(3, now, now, "q-demo-ci", 2, "harbor.local", "q-demo/q-demo", []byte(`{"type":"commit"}`), []byte(`{"branch":"main"}`))
 	cdRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "render_engine", "values_yaml", "release_strategy", "git_ops"}).
 		AddRow(4, now, now, "q-demo-cd", 2, "helm", "replicaCount: 1\n", []byte(`{"deployment_mode":"rolling","batch_rule":{"batch_count":1,"batch_ratio":[1],"trigger_type":"auto","interval":0}}`), []byte(`{"enabled":true,"repo_url":"https://github.com/richer421/q-demo-gitops.git","branch":"main","app_root":"apps","manifest_root":"manifests"}`))
-	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "instance_type", "spec", "attach_resources"}).
-		AddRow(5, now, now, "q-demo-dev", 2, "dev", "deployment", []byte(`{"deployment":{}}`), []byte(`{"services":{"q-demo":{"metadata":{"name":"q-demo"}}}}`))
+	instanceRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
+		AddRow(5, now, now, "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`))
 	deployPlanRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
 		AddRow(6, now, now, "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5)
 
@@ -381,7 +380,7 @@ func TestServiceSeedDemoSetupReconcilesDemoCIRegistry(t *testing.T) {
 		WillReturnRows(ciRows)
 	mock.ExpectQuery("SELECT \\* FROM `cd_configs` WHERE `cd_configs`.`business_unit_id` = .*").
 		WillReturnRows(cdRows)
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`business_unit_id` = .*").
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`business_unit_id` = .*").
 		WillReturnRows(instanceRows)
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`business_unit_id` = .*").
 		WillReturnRows(deployPlanRows)
@@ -392,11 +391,11 @@ func TestServiceSeedDemoSetupReconcilesDemoCIRegistry(t *testing.T) {
 	mock.ExpectExec("INSERT INTO `ci_configs`").
 		WithArgs(anyTime(), anyTime(), "q-demo-ci", int64(2), defaultDemoImageRegistry, "q-demo/q-demo", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(3), anyTime()).
 		WillReturnResult(sqlmock.NewResult(3, 1))
-	mock.ExpectQuery("SELECT \\* FROM `instance_configs` WHERE `instance_configs`.`id` = .*").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "instance_type", "spec", "attach_resources"}).
-			AddRow(5, now, now, "q-demo-dev", 2, "dev", "deployment", []byte(`{"deployment":{}}`), []byte(`{"services":{"q-demo":{"metadata":{"name":"q-demo"}}}}`)))
-	mock.ExpectExec("INSERT INTO `instance_configs`").
-		WithArgs(anyTime(), anyTime(), "q-demo-dev", int64(2), "dev", "deployment", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(5), anyTime()).
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`id` = .*").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
+			AddRow(5, now, now, "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`)))
+	mock.ExpectExec("INSERT INTO `instance_oams`").
+		WithArgs(anyTime(), anyTime(), "q-demo-dev", int64(2), "dev", "v1alpha1", sqlmock.AnyArg(), sqlmock.AnyArg(), int64(5), anyTime()).
 		WillReturnResult(sqlmock.NewResult(5, 1))
 	mock.ExpectCommit()
 

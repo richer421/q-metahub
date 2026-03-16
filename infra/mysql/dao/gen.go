@@ -23,7 +23,7 @@ var (
 	Dependency        *dependency
 	DependencyBinding *dependencyBinding
 	DeployPlan        *deployPlan
-	InstanceConfig    *instanceConfig
+	InstanceOAM       *instanceOAM
 	Project           *project
 )
 
@@ -35,7 +35,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	Dependency = &Q.Dependency
 	DependencyBinding = &Q.DependencyBinding
 	DeployPlan = &Q.DeployPlan
-	InstanceConfig = &Q.InstanceConfig
+	InstanceOAM = &Q.InstanceOAM
 	Project = &Q.Project
 }
 
@@ -48,7 +48,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		Dependency:        newDependency(db, opts...),
 		DependencyBinding: newDependencyBinding(db, opts...),
 		DeployPlan:        newDeployPlan(db, opts...),
-		InstanceConfig:    newInstanceConfig(db, opts...),
+		InstanceOAM:       newInstanceOAM(db, opts...),
 		Project:           newProject(db, opts...),
 	}
 }
@@ -62,7 +62,7 @@ type Query struct {
 	Dependency        dependency
 	DependencyBinding dependencyBinding
 	DeployPlan        deployPlan
-	InstanceConfig    instanceConfig
+	InstanceOAM       instanceOAM
 	Project           project
 }
 
@@ -77,7 +77,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		Dependency:        q.Dependency.clone(db),
 		DependencyBinding: q.DependencyBinding.clone(db),
 		DeployPlan:        q.DeployPlan.clone(db),
-		InstanceConfig:    q.InstanceConfig.clone(db),
+		InstanceOAM:       q.InstanceOAM.clone(db),
 		Project:           q.Project.clone(db),
 	}
 }
@@ -99,7 +99,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		Dependency:        q.Dependency.replaceDB(db),
 		DependencyBinding: q.DependencyBinding.replaceDB(db),
 		DeployPlan:        q.DeployPlan.replaceDB(db),
-		InstanceConfig:    q.InstanceConfig.replaceDB(db),
+		InstanceOAM:       q.InstanceOAM.replaceDB(db),
 		Project:           q.Project.replaceDB(db),
 	}
 }
@@ -111,7 +111,7 @@ type queryCtx struct {
 	Dependency        *dependencyDo
 	DependencyBinding *dependencyBindingDo
 	DeployPlan        *deployPlanDo
-	InstanceConfig    *instanceConfigDo
+	InstanceOAM       *instanceOAMDo
 	Project           *projectDo
 }
 
@@ -123,7 +123,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		Dependency:        q.Dependency.WithContext(ctx),
 		DependencyBinding: q.DependencyBinding.WithContext(ctx),
 		DeployPlan:        q.DeployPlan.WithContext(ctx),
-		InstanceConfig:    q.InstanceConfig.WithContext(ctx),
+		InstanceOAM:       q.InstanceOAM.WithContext(ctx),
 		Project:           q.Project.WithContext(ctx),
 	}
 }

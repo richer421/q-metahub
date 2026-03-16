@@ -47,22 +47,28 @@ func buildCDConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (
 	}, nil
 }
 
-func buildInstanceConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.InstanceConfig, error) {
-	var spec model.InstanceSpec
-	if err := convertJSONMap(req.InstanceConfig.Spec, &spec); err != nil {
+func buildInstanceConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.InstanceOAM, error) {
+	var oamApplication model.OAMApplication
+	if err := convertJSONMap(req.InstanceConfig.OAMApplication, &oamApplication); err != nil {
 		return nil, err
 	}
-	var attachResources model.InstanceAttachResources
-	if err := convertJSONMap(req.InstanceConfig.AttachResources, &attachResources); err != nil {
+	var frontendPayload model.InstanceOAMPayload
+	if err := convertJSONMap(req.InstanceConfig.FrontendPayload, &frontendPayload); err != nil {
 		return nil, err
 	}
-	return &model.InstanceConfig{
+
+	schemaVersion := req.InstanceConfig.SchemaVersion
+	if schemaVersion == "" {
+		schemaVersion = "v1alpha1"
+	}
+
+	return &model.InstanceOAM{
 		Name:            req.InstanceConfig.Name,
 		BusinessUnitID:  businessUnitID,
 		Env:             req.InstanceConfig.Env,
-		InstanceType:    req.InstanceConfig.InstanceType,
-		Spec:            spec,
-		AttachResources: attachResources,
+		SchemaVersion:   schemaVersion,
+		OAMApplication:  oamApplication,
+		FrontendPayload: frontendPayload,
 	}, nil
 }
 
@@ -77,7 +83,7 @@ func convertJSONMap(input map[string]any, target any) error {
 	return json.Unmarshal(data, target)
 }
 
-func aggregateDTO(project *model.Project, businessUnit *model.BusinessUnit, ciConfig *model.CIConfig, cdConfig *model.CDConfig, instanceConfig *model.InstanceConfig, deployPlan *model.DeployPlan) *vo.DeployPlanAggregateDTO {
+func aggregateDTO(project *model.Project, businessUnit *model.BusinessUnit, ciConfig *model.CIConfig, cdConfig *model.CDConfig, instanceConfig *model.InstanceOAM, deployPlan *model.DeployPlan) *vo.DeployPlanAggregateDTO {
 	return &vo.DeployPlanAggregateDTO{
 		Project:        toProjectDTO(project),
 		BusinessUnit:   toBusinessUnitDTO(businessUnit),
@@ -166,7 +172,7 @@ func toCDConfigDTO(in *model.CDConfig) vo.CDConfigDTO {
 	return dto
 }
 
-func toInstanceConfigDTO(in *model.InstanceConfig) vo.InstanceConfigDTO {
+func toInstanceConfigDTO(in *model.InstanceOAM) vo.InstanceConfigDTO {
 	return vo.InstanceConfigDTO{
 		ID:              in.ID,
 		CreatedAt:       in.CreatedAt,
@@ -174,9 +180,9 @@ func toInstanceConfigDTO(in *model.InstanceConfig) vo.InstanceConfigDTO {
 		Name:            in.Name,
 		BusinessUnitID:  in.BusinessUnitID,
 		Env:             in.Env,
-		InstanceType:    in.InstanceType,
-		Spec:            map[string]any{"deployment": in.Spec.Deployment},
-		AttachResources: map[string]any{"services": in.AttachResources.Services},
+		SchemaVersion:   in.SchemaVersion,
+		OAMApplication:  modelToMap(in.OAMApplication),
+		FrontendPayload: modelToMap(in.FrontendPayload),
 	}
 }
 
@@ -210,7 +216,7 @@ func mapCDConfigs(items []*model.CDConfig) []vo.CDConfigDTO {
 	return out
 }
 
-func mapInstanceConfigs(items []*model.InstanceConfig) []vo.InstanceConfigDTO {
+func mapInstanceConfigs(items []*model.InstanceOAM) []vo.InstanceConfigDTO {
 	out := make([]vo.InstanceConfigDTO, 0, len(items))
 	for _, item := range items {
 		out = append(out, toInstanceConfigDTO(item))
@@ -231,4 +237,19 @@ func derefString(v *string) string {
 		return ""
 	}
 	return *v
+}
+
+func modelToMap(v any) map[string]any {
+	if v == nil {
+		return nil
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	var out map[string]any
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil
+	}
+	return out
 }

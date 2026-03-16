@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/richer421/q-metahub/app/metadata/vo"
 	"github.com/richer421/q-metahub/infra/mysql/dao"
@@ -85,30 +86,11 @@ func (s *Service) SeedDemoSetup(ctx context.Context) (*vo.DeployPlanAggregateDTO
 			},
 		},
 		InstanceConfig: vo.CreateInstanceConfigReq{
-			Name:         "q-demo-dev",
-			Env:          "dev",
-			InstanceType: "deployment",
-			Spec:         defaultDemoInstanceSpecMap(),
-			AttachResources: map[string]any{
-				"services": map[string]any{
-					"q-demo": map[string]any{
-						"metadata": map[string]any{
-							"name": "q-demo",
-						},
-						"spec": map[string]any{
-							"selector": map[string]any{
-								"app": "q-demo",
-							},
-							"ports": []map[string]any{
-								{
-									"port":       defaultDemoContainerPort,
-									"targetPort": defaultDemoContainerPort,
-								},
-							},
-						},
-					},
-				},
-			},
+			Name:            "q-demo-dev",
+			Env:             "dev",
+			SchemaVersion:   "v1alpha1",
+			OAMApplication:  defaultDemoOAMApplicationMap(),
+			FrontendPayload: defaultDemoFrontendPayloadMap(),
 		},
 		DeployPlan: vo.CreateDeployPlanReq{
 			Name:        "q-demo-dev-plan",
@@ -126,7 +108,7 @@ func (s *Service) reconcileDemoSetup(ctx context.Context, fullSpec *vo.BusinessU
 	ciCfg := fullSpec.CIConfigs[0]
 	instanceCfg := fullSpec.InstanceConfigs[0]
 	ciNeedsUpdate := ciCfg.ImageRegistry != defaultDemoImageRegistry
-	instanceNeedsUpdate := !hasRunnableDemoDeployment(instanceCfg.Spec)
+	instanceNeedsUpdate := !hasRunnableDemoPod(instanceCfg.OAMApplication)
 	if !ciNeedsUpdate && !instanceNeedsUpdate {
 		return nil
 	}
@@ -145,62 +127,67 @@ func (s *Service) reconcileDemoSetup(ctx context.Context, fullSpec *vo.BusinessU
 			fullSpec.CIConfigs[0].ImageRegistry = defaultDemoImageRegistry
 		}
 		if instanceNeedsUpdate {
-			instanceModel, err := q.InstanceConfig.Where(dao.InstanceConfig.ID.Eq(instanceCfg.ID)).First()
+			instanceModel, err := q.InstanceOAM.Where(dao.InstanceOAM.ID.Eq(instanceCfg.ID)).First()
 			if err != nil {
 				return err
 			}
-			instanceModel.Spec = defaultDemoInstanceSpec()
-			if err := q.InstanceConfig.Save(instanceModel); err != nil {
+			instanceModel.OAMApplication = defaultDemoOAMApplication()
+			instanceModel.FrontendPayload = defaultDemoFrontendPayload()
+			if err := q.InstanceOAM.Save(instanceModel); err != nil {
 				return err
 			}
-			fullSpec.InstanceConfigs[0].Spec = defaultDemoInstanceSpecMap()
+			fullSpec.InstanceConfigs[0].OAMApplication = defaultDemoOAMApplicationMap()
+			fullSpec.InstanceConfigs[0].FrontendPayload = defaultDemoFrontendPayloadMap()
 		}
 		return nil
 	})
 }
 
-func hasRunnableDemoDeployment(spec map[string]any) bool {
-	deployment, ok := spec["deployment"].(map[string]any)
+func hasRunnableDemoPod(oamApp map[string]any) bool {
+	component, ok := oamApp["component"].(map[string]any)
 	if !ok {
 		return false
 	}
-	template, ok := deployment["template"].(map[string]any)
+	properties, ok := component["properties"].(map[string]any)
 	if !ok {
 		return false
 	}
-	podSpec, ok := template["spec"].(map[string]any)
+	mainContainer, ok := properties["mainContainer"].(map[string]any)
 	if !ok {
 		return false
 	}
-	containers, ok := podSpec["containers"].([]any)
-	return ok && len(containers) > 0
+
+	name, _ := mainContainer["name"].(string)
+	return strings.TrimSpace(name) != ""
 }
 
-func defaultDemoInstanceSpecMap() map[string]any {
+func defaultDemoOAMApplicationMap() map[string]any {
 	return map[string]any{
-		"deployment": map[string]any{
-			"selector": map[string]any{
-				"matchLabels": map[string]any{
-					"app": "q-demo",
+		"apiVersion": "q.oam/v1alpha1",
+		"kind":       "InstanceApplication",
+		"component": map[string]any{
+			"name": "q-demo",
+			"type": model.OAMComponentTypePod,
+			"properties": map[string]any{
+				"mainContainer": map[string]any{
+					"name":  "q-demo",
+					"image": fmt.Sprintf("%s/%s:latest", defaultDemoImageRegistry, "q-demo/q-demo"),
+					"ports": []int{defaultDemoContainerPort},
 				},
 			},
-			"template": map[string]any{
-				"metadata": map[string]any{
-					"labels": map[string]any{
-						"app": "q-demo",
-					},
+		},
+		"traits": map[string]any{
+			"network": map[string]any{
+				"type": "k8s_service",
+				"k8sServiceTrait": map[string]any{
+					"ports": []int{defaultDemoContainerPort},
 				},
-				"spec": map[string]any{
-					"containers": []map[string]any{
-						{
-							"name":  "q-demo",
-							"image": fmt.Sprintf("%s/%s:latest", defaultDemoImageRegistry, "q-demo/q-demo"),
-							"ports": []map[string]any{
-								{
-									"containerPort": defaultDemoContainerPort,
-								},
-							},
-						},
+			},
+			"config": map[string]any{
+				"env": []map[string]any{
+					{
+						"key":   "ENV",
+						"value": "dev",
 					},
 				},
 			},
@@ -208,8 +195,27 @@ func defaultDemoInstanceSpecMap() map[string]any {
 	}
 }
 
-func defaultDemoInstanceSpec() model.InstanceSpec {
-	var spec model.InstanceSpec
-	_ = convertJSONMap(defaultDemoInstanceSpecMap(), &spec)
-	return spec
+func defaultDemoOAMApplication() model.OAMApplication {
+	var app model.OAMApplication
+	_ = convertJSONMap(defaultDemoOAMApplicationMap(), &app)
+	return app
+}
+
+func defaultDemoFrontendPayloadMap() map[string]any {
+	return map[string]any{
+		"basic": map[string]any{
+			"name": "q-demo-dev",
+			"env":  "dev",
+		},
+		"extended": map[string]any{
+			"network_mode": "k8s_service",
+			"ports":        []int{defaultDemoContainerPort},
+		},
+	}
+}
+
+func defaultDemoFrontendPayload() model.InstanceOAMPayload {
+	var payload model.InstanceOAMPayload
+	_ = convertJSONMap(defaultDemoFrontendPayloadMap(), &payload)
+	return payload
 }
