@@ -24,7 +24,7 @@ redis:
 
 kafka:
   brokers:
-    - "127.0.0.1:9092"
+    - "127.0.0.1:30092"
   max_retries: 3
 
 otel:
