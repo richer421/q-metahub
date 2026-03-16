@@ -24,19 +24,19 @@ func (s *Service) SeedDemoSetup(ctx context.Context) (*vo.DeployPlanAggregateDTO
 		if err != nil {
 			return nil, err
 		}
-		if len(fullSpec.CIConfigs) == 0 || len(fullSpec.CDConfigs) == 0 || len(fullSpec.InstanceConfigs) == 0 || len(fullSpec.DeployPlans) == 0 {
+		if len(fullSpec.CIConfigs) == 0 || len(fullSpec.CDConfigs) == 0 || len(fullSpec.InstanceOAMs) == 0 || len(fullSpec.DeployPlans) == 0 {
 			return nil, fmt.Errorf("demo setup is incomplete")
 		}
 		if err := s.reconcileDemoSetup(ctx, fullSpec); err != nil {
 			return nil, err
 		}
 		return &vo.DeployPlanAggregateDTO{
-			Project:        fullSpec.Project,
-			BusinessUnit:   fullSpec.BusinessUnit,
-			CIConfig:       fullSpec.CIConfigs[0],
-			CDConfig:       fullSpec.CDConfigs[0],
-			InstanceConfig: fullSpec.InstanceConfigs[0],
-			DeployPlan:     fullSpec.DeployPlans[0],
+			Project:      fullSpec.Project,
+			BusinessUnit: fullSpec.BusinessUnit,
+			CIConfig:     fullSpec.CIConfigs[0],
+			CDConfig:     fullSpec.CDConfigs[0],
+			InstanceOAM:  fullSpec.InstanceOAMs[0],
+			DeployPlan:   fullSpec.DeployPlans[0],
 		}, nil
 	}
 
@@ -85,7 +85,7 @@ func (s *Service) SeedDemoSetup(ctx context.Context) (*vo.DeployPlanAggregateDTO
 				"manifest_root": "manifests",
 			},
 		},
-		InstanceConfig: vo.CreateInstanceConfigReq{
+		InstanceOAM: vo.CreateInstanceOAMReq{
 			Name:            "q-demo-dev",
 			Env:             "dev",
 			SchemaVersion:   "v1alpha1",
@@ -101,12 +101,12 @@ func (s *Service) SeedDemoSetup(ctx context.Context) (*vo.DeployPlanAggregateDTO
 }
 
 func (s *Service) reconcileDemoSetup(ctx context.Context, fullSpec *vo.BusinessUnitFullSpecDTO) error {
-	if len(fullSpec.CIConfigs) == 0 || len(fullSpec.InstanceConfigs) == 0 {
+	if len(fullSpec.CIConfigs) == 0 || len(fullSpec.InstanceOAMs) == 0 {
 		return nil
 	}
 
 	ciCfg := fullSpec.CIConfigs[0]
-	instanceCfg := fullSpec.InstanceConfigs[0]
+	instanceCfg := fullSpec.InstanceOAMs[0]
 	ciNeedsUpdate := ciCfg.ImageRegistry != defaultDemoImageRegistry
 	instanceNeedsUpdate := !hasRunnableDemoPod(instanceCfg.OAMApplication)
 	if !ciNeedsUpdate && !instanceNeedsUpdate {
@@ -136,8 +136,8 @@ func (s *Service) reconcileDemoSetup(ctx context.Context, fullSpec *vo.BusinessU
 			if err := q.InstanceOAM.Save(instanceModel); err != nil {
 				return err
 			}
-			fullSpec.InstanceConfigs[0].OAMApplication = defaultDemoOAMApplicationMap()
-			fullSpec.InstanceConfigs[0].FrontendPayload = defaultDemoFrontendPayloadMap()
+			fullSpec.InstanceOAMs[0].OAMApplication = defaultDemoOAMApplicationMap()
+			fullSpec.InstanceOAMs[0].FrontendPayload = defaultDemoFrontendPayloadMap()
 		}
 		return nil
 	})

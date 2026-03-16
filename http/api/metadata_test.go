@@ -80,7 +80,7 @@ func TestMetadataAPICreateDeployPlanAggregate(t *testing.T) {
 				"manifest_root": "manifests",
 			},
 		},
-		"instance_config": map[string]any{
+		"instance_oam": map[string]any{
 			"name":           "q-demo-dev",
 			"env":            "dev",
 			"schema_version": "v1alpha1",
@@ -135,7 +135,7 @@ func TestMetadataAPICreateDeployPlanAggregate(t *testing.T) {
 func TestMetadataAPIGetDeployPlan(t *testing.T) {
 	router, mock := setupRouterWithMockDB(t)
 
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
+	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_oam_id"}).
 		AddRow(6, time.Now(), time.Now(), "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5)
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`id` = .*").WillReturnRows(rows)
 
@@ -156,7 +156,7 @@ func TestMetadataAPIGetDeployPlanFullSpec(t *testing.T) {
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`id` = .*").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "created_at", "updated_at", "name", "description",
-			"business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id",
+			"business_unit_id", "ci_config_id", "cd_config_id", "instance_oam_id",
 		}).AddRow(6, now, now, "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5))
 	mock.ExpectQuery("SELECT \\* FROM `business_units` WHERE `business_units`.`id` = .*").
 		WillReturnRows(sqlmock.NewRows([]string{
@@ -214,7 +214,7 @@ func TestMetadataAPIGetBusinessUnitFullSpec(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
 			AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`)))
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`business_unit_id` = .*").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_oam_id"}).
 			AddRow(6, time.Now(), time.Now(), "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/business-units/2/full-spec", nil)
@@ -252,7 +252,7 @@ func TestMetadataAPISeedDemoSetup(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "business_unit_id", "env", "schema_version", "oam_application", "frontend_payload"}).
 			AddRow(5, time.Now(), time.Now(), "q-demo-dev", 2, "dev", "v1alpha1", []byte(`{"component":{}}`), []byte(`{"basic":{"name":"q-demo-dev"}}`)))
 	mock.ExpectQuery("SELECT \\* FROM `deploy_plans` WHERE `deploy_plans`.`business_unit_id` = .*").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_config_id"}).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "business_unit_id", "ci_config_id", "cd_config_id", "instance_oam_id"}).
 			AddRow(6, time.Now(), time.Now(), "q-demo-dev-plan", "demo deploy plan", 2, 3, 4, 5))
 	mock.ExpectBegin()
 	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE `ci_configs`.`id` = .*").

@@ -35,7 +35,7 @@ func newDeployPlan(db *gorm.DB, opts ...gen.DOOption) deployPlan {
 	_deployPlan.BusinessUnitID = field.NewInt64(tableName, "business_unit_id")
 	_deployPlan.CIConfigID = field.NewInt64(tableName, "ci_config_id")
 	_deployPlan.CDConfigID = field.NewInt64(tableName, "cd_config_id")
-	_deployPlan.InstanceConfigID = field.NewInt64(tableName, "instance_config_id")
+	_deployPlan.InstanceOAMID = field.NewInt64(tableName, "instance_oam_id")
 
 	_deployPlan.fillFieldMap()
 
@@ -45,16 +45,16 @@ func newDeployPlan(db *gorm.DB, opts ...gen.DOOption) deployPlan {
 type deployPlan struct {
 	deployPlanDo deployPlanDo
 
-	ALL              field.Asterisk
-	ID               field.Int64
-	CreatedAt        field.Time
-	UpdatedAt        field.Time
-	Name             field.String
-	Description      field.String
-	BusinessUnitID   field.Int64
-	CIConfigID       field.Int64
-	CDConfigID       field.Int64
-	InstanceConfigID field.Int64
+	ALL            field.Asterisk
+	ID             field.Int64
+	CreatedAt      field.Time
+	UpdatedAt      field.Time
+	Name           field.String
+	Description    field.String
+	BusinessUnitID field.Int64
+	CIConfigID     field.Int64
+	CDConfigID     field.Int64
+	InstanceOAMID  field.Int64
 
 	fieldMap map[string]field.Expr
 }
@@ -79,7 +79,7 @@ func (d *deployPlan) updateTableName(table string) *deployPlan {
 	d.BusinessUnitID = field.NewInt64(table, "business_unit_id")
 	d.CIConfigID = field.NewInt64(table, "ci_config_id")
 	d.CDConfigID = field.NewInt64(table, "cd_config_id")
-	d.InstanceConfigID = field.NewInt64(table, "instance_config_id")
+	d.InstanceOAMID = field.NewInt64(table, "instance_oam_id")
 
 	d.fillFieldMap()
 
@@ -115,7 +115,7 @@ func (d *deployPlan) fillFieldMap() {
 	d.fieldMap["business_unit_id"] = d.BusinessUnitID
 	d.fieldMap["ci_config_id"] = d.CIConfigID
 	d.fieldMap["cd_config_id"] = d.CDConfigID
-	d.fieldMap["instance_config_id"] = d.InstanceConfigID
+	d.fieldMap["instance_oam_id"] = d.InstanceOAMID
 }
 
 func (d deployPlan) clone(db *gorm.DB) deployPlan {

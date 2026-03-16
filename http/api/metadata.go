@@ -27,7 +27,7 @@ func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	v1.POST("/business-units", api.CreateBusinessUnit)
 	v1.POST("/ci-configs", api.CreateCIConfig)
 	v1.POST("/cd-configs", api.CreateCDConfig)
-	v1.POST("/instance-configs", api.CreateInstanceConfig)
+	v1.POST("/instance-oams", api.CreateInstanceOAM)
 	v1.POST("/deploy-plans", api.CreateDeployPlanAggregate)
 	v1.GET("/deploy-plans/:id", api.GetDeployPlan)
 	v1.GET("/deploy-plans/:id/full-spec", api.GetDeployPlanFullSpec)
@@ -80,8 +80,8 @@ func (a *MetadataAPI) CreateCDConfig(c *gin.Context) {
 	common.OK(c, req)
 }
 
-func (a *MetadataAPI) CreateInstanceConfig(c *gin.Context) {
-	var req vo.CreateInstanceConfigReq
+func (a *MetadataAPI) CreateInstanceOAM(c *gin.Context) {
+	var req vo.CreateInstanceOAMReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.Fail(c, err)
 		return
@@ -118,13 +118,13 @@ func (a *MetadataAPI) GetDeployPlan(c *gin.Context) {
 	}
 
 	common.OK(c, gin.H{
-		"id":                 entity.ID,
-		"name":               entity.Name,
-		"description":        entity.Description,
-		"business_unit_id":   entity.BusinessUnitID,
-		"ci_config_id":       entity.CIConfigID,
-		"cd_config_id":       entity.CDConfigID,
-		"instance_config_id": entity.InstanceConfigID,
+		"id":               entity.ID,
+		"name":             entity.Name,
+		"description":      entity.Description,
+		"business_unit_id": entity.BusinessUnitID,
+		"ci_config_id":     entity.CIConfigID,
+		"cd_config_id":     entity.CDConfigID,
+		"instance_oam_id":  entity.InstanceOAMID,
 	})
 }
 

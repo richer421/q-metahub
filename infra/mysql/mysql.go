@@ -41,6 +41,15 @@ func Init() error {
 		return fmt.Errorf("create database failed: %w", err)
 	}
 
+	// 迁移 deploy_plans 字段：instance_config_id -> instance_oam_id
+	if db.Migrator().HasTable("deploy_plans") &&
+		db.Migrator().HasColumn("deploy_plans", "instance_config_id") &&
+		!db.Migrator().HasColumn("deploy_plans", "instance_oam_id") {
+		if err := db.Migrator().RenameColumn("deploy_plans", "instance_config_id", "instance_oam_id"); err != nil {
+			return fmt.Errorf("rename deploy_plans.instance_config_id to instance_oam_id failed: %w", err)
+		}
+	}
+
 	// 自动迁移表结构
 	err = db.AutoMigrate(
 		&model.Project{},

@@ -47,25 +47,25 @@ func buildCDConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (
 	}, nil
 }
 
-func buildInstanceConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.InstanceOAM, error) {
+func buildInstanceOAM(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.InstanceOAM, error) {
 	var oamApplication model.OAMApplication
-	if err := convertJSONMap(req.InstanceConfig.OAMApplication, &oamApplication); err != nil {
+	if err := convertJSONMap(req.InstanceOAM.OAMApplication, &oamApplication); err != nil {
 		return nil, err
 	}
 	var frontendPayload model.InstanceOAMPayload
-	if err := convertJSONMap(req.InstanceConfig.FrontendPayload, &frontendPayload); err != nil {
+	if err := convertJSONMap(req.InstanceOAM.FrontendPayload, &frontendPayload); err != nil {
 		return nil, err
 	}
 
-	schemaVersion := req.InstanceConfig.SchemaVersion
+	schemaVersion := req.InstanceOAM.SchemaVersion
 	if schemaVersion == "" {
 		schemaVersion = "v1alpha1"
 	}
 
 	return &model.InstanceOAM{
-		Name:            req.InstanceConfig.Name,
+		Name:            req.InstanceOAM.Name,
 		BusinessUnitID:  businessUnitID,
-		Env:             req.InstanceConfig.Env,
+		Env:             req.InstanceOAM.Env,
 		SchemaVersion:   schemaVersion,
 		OAMApplication:  oamApplication,
 		FrontendPayload: frontendPayload,
@@ -83,14 +83,14 @@ func convertJSONMap(input map[string]any, target any) error {
 	return json.Unmarshal(data, target)
 }
 
-func aggregateDTO(project *model.Project, businessUnit *model.BusinessUnit, ciConfig *model.CIConfig, cdConfig *model.CDConfig, instanceConfig *model.InstanceOAM, deployPlan *model.DeployPlan) *vo.DeployPlanAggregateDTO {
+func aggregateDTO(project *model.Project, businessUnit *model.BusinessUnit, ciConfig *model.CIConfig, cdConfig *model.CDConfig, instanceOAM *model.InstanceOAM, deployPlan *model.DeployPlan) *vo.DeployPlanAggregateDTO {
 	return &vo.DeployPlanAggregateDTO{
-		Project:        toProjectDTO(project),
-		BusinessUnit:   toBusinessUnitDTO(businessUnit),
-		CIConfig:       toCIConfigDTO(ciConfig),
-		CDConfig:       toCDConfigDTO(cdConfig),
-		InstanceConfig: toInstanceConfigDTO(instanceConfig),
-		DeployPlan:     toDeployPlanDTO(deployPlan),
+		Project:      toProjectDTO(project),
+		BusinessUnit: toBusinessUnitDTO(businessUnit),
+		CIConfig:     toCIConfigDTO(ciConfig),
+		CDConfig:     toCDConfigDTO(cdConfig),
+		InstanceOAM:  toInstanceOAMDTO(instanceOAM),
+		DeployPlan:   toDeployPlanDTO(deployPlan),
 	}
 }
 
@@ -172,8 +172,8 @@ func toCDConfigDTO(in *model.CDConfig) vo.CDConfigDTO {
 	return dto
 }
 
-func toInstanceConfigDTO(in *model.InstanceOAM) vo.InstanceConfigDTO {
-	return vo.InstanceConfigDTO{
+func toInstanceOAMDTO(in *model.InstanceOAM) vo.InstanceOAMDTO {
+	return vo.InstanceOAMDTO{
 		ID:              in.ID,
 		CreatedAt:       in.CreatedAt,
 		UpdatedAt:       in.UpdatedAt,
@@ -188,15 +188,15 @@ func toInstanceConfigDTO(in *model.InstanceOAM) vo.InstanceConfigDTO {
 
 func toDeployPlanDTO(in *model.DeployPlan) vo.DeployPlanDTO {
 	return vo.DeployPlanDTO{
-		ID:               in.ID,
-		CreatedAt:        in.CreatedAt,
-		UpdatedAt:        in.UpdatedAt,
-		Name:             in.Name,
-		Description:      in.Description,
-		BusinessUnitID:   in.BusinessUnitID,
-		CIConfigID:       in.CIConfigID,
-		CDConfigID:       in.CDConfigID,
-		InstanceConfigID: in.InstanceConfigID,
+		ID:             in.ID,
+		CreatedAt:      in.CreatedAt,
+		UpdatedAt:      in.UpdatedAt,
+		Name:           in.Name,
+		Description:    in.Description,
+		BusinessUnitID: in.BusinessUnitID,
+		CIConfigID:     in.CIConfigID,
+		CDConfigID:     in.CDConfigID,
+		InstanceOAMID:  in.InstanceOAMID,
 	}
 }
 
@@ -216,10 +216,10 @@ func mapCDConfigs(items []*model.CDConfig) []vo.CDConfigDTO {
 	return out
 }
 
-func mapInstanceConfigs(items []*model.InstanceOAM) []vo.InstanceConfigDTO {
-	out := make([]vo.InstanceConfigDTO, 0, len(items))
+func mapInstanceOAMs(items []*model.InstanceOAM) []vo.InstanceOAMDTO {
+	out := make([]vo.InstanceOAMDTO, 0, len(items))
 	for _, item := range items {
-		out = append(out, toInstanceConfigDTO(item))
+		out = append(out, toInstanceOAMDTO(item))
 	}
 	return out
 }

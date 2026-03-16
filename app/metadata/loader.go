@@ -9,12 +9,12 @@ import (
 )
 
 type businessUnitAggregate struct {
-	project         *model.Project
-	businessUnit    *model.BusinessUnit
-	ciConfigs       []*model.CIConfig
-	cdConfigs       []*model.CDConfig
-	instanceConfigs []*model.InstanceOAM
-	deployPlans     []*model.DeployPlan
+	project      *model.Project
+	businessUnit *model.BusinessUnit
+	ciConfigs    []*model.CIConfig
+	cdConfigs    []*model.CDConfig
+	instanceOAMs []*model.InstanceOAM
+	deployPlans  []*model.DeployPlan
 }
 
 func loadBusinessUnitAggregate(ctx context.Context, businessUnitID int64) (*businessUnitAggregate, error) {
@@ -34,7 +34,7 @@ func loadBusinessUnitAggregate(ctx context.Context, businessUnitID int64) (*busi
 	if err != nil {
 		return nil, err
 	}
-	instanceConfigs, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.BusinessUnitID.Eq(businessUnitID)).Find()
+	instanceOAMs, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.BusinessUnitID.Eq(businessUnitID)).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -44,33 +44,33 @@ func loadBusinessUnitAggregate(ctx context.Context, businessUnitID int64) (*busi
 	}
 
 	return &businessUnitAggregate{
-		project:         project,
-		businessUnit:    businessUnit,
-		ciConfigs:       ciConfigs,
-		cdConfigs:       cdConfigs,
-		instanceConfigs: instanceConfigs,
-		deployPlans:     deployPlans,
+		project:      project,
+		businessUnit: businessUnit,
+		ciConfigs:    ciConfigs,
+		cdConfigs:    cdConfigs,
+		instanceOAMs: instanceOAMs,
+		deployPlans:  deployPlans,
 	}, nil
 }
 
 func (a *businessUnitAggregate) toFullSpecDTO() *vo.BusinessUnitFullSpecDTO {
 	return &vo.BusinessUnitFullSpecDTO{
-		Project:         toProjectDTO(a.project),
-		BusinessUnit:    toBusinessUnitDTO(a.businessUnit),
-		CIConfigs:       mapCIConfigs(a.ciConfigs),
-		CDConfigs:       mapCDConfigs(a.cdConfigs),
-		InstanceConfigs: mapInstanceConfigs(a.instanceConfigs),
-		DeployPlans:     mapDeployPlans(a.deployPlans),
+		Project:      toProjectDTO(a.project),
+		BusinessUnit: toBusinessUnitDTO(a.businessUnit),
+		CIConfigs:    mapCIConfigs(a.ciConfigs),
+		CDConfigs:    mapCDConfigs(a.cdConfigs),
+		InstanceOAMs: mapInstanceOAMs(a.instanceOAMs),
+		DeployPlans:  mapDeployPlans(a.deployPlans),
 	}
 }
 
 type deployPlanAggregate struct {
-	project        *model.Project
-	businessUnit   *model.BusinessUnit
-	ciConfig       *model.CIConfig
-	cdConfig       *model.CDConfig
-	instanceConfig *model.InstanceOAM
-	deployPlan     *model.DeployPlan
+	project      *model.Project
+	businessUnit *model.BusinessUnit
+	ciConfig     *model.CIConfig
+	cdConfig     *model.CDConfig
+	instanceOAM  *model.InstanceOAM
+	deployPlan   *model.DeployPlan
 }
 
 func loadDeployPlanAggregate(ctx context.Context, deployPlanID int64) (*deployPlanAggregate, error) {
@@ -94,21 +94,21 @@ func loadDeployPlanAggregate(ctx context.Context, deployPlanID int64) (*deployPl
 	if err != nil {
 		return nil, err
 	}
-	instanceConfig, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(deployPlan.InstanceConfigID)).First()
+	instanceOAM, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(deployPlan.InstanceOAMID)).First()
 	if err != nil {
 		return nil, err
 	}
 
 	return &deployPlanAggregate{
-		project:        project,
-		businessUnit:   businessUnit,
-		ciConfig:       ciConfig,
-		cdConfig:       cdConfig,
-		instanceConfig: instanceConfig,
-		deployPlan:     deployPlan,
+		project:      project,
+		businessUnit: businessUnit,
+		ciConfig:     ciConfig,
+		cdConfig:     cdConfig,
+		instanceOAM:  instanceOAM,
+		deployPlan:   deployPlan,
 	}, nil
 }
 
 func (a *deployPlanAggregate) toDTO() *vo.DeployPlanAggregateDTO {
-	return aggregateDTO(a.project, a.businessUnit, a.ciConfig, a.cdConfig, a.instanceConfig, a.deployPlan)
+	return aggregateDTO(a.project, a.businessUnit, a.ciConfig, a.cdConfig, a.instanceOAM, a.deployPlan)
 }

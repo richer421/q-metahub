@@ -59,27 +59,27 @@ func (s *Service) CreateDeployPlanAggregate(ctx context.Context, req *vo.CreateD
 			return err
 		}
 
-		instanceConfig, err := buildInstanceConfig(req, businessUnit.ID)
+		instanceOAM, err := buildInstanceOAM(req, businessUnit.ID)
 		if err != nil {
 			return err
 		}
-		if err := q.InstanceOAM.Create(instanceConfig); err != nil {
+		if err := q.InstanceOAM.Create(instanceOAM); err != nil {
 			return err
 		}
 
 		deployPlan := &model.DeployPlan{
-			Name:             req.DeployPlan.Name,
-			Description:      req.DeployPlan.Description,
-			BusinessUnitID:   businessUnit.ID,
-			CIConfigID:       ciConfig.ID,
-			CDConfigID:       cdConfig.ID,
-			InstanceConfigID: instanceConfig.ID,
+			Name:           req.DeployPlan.Name,
+			Description:    req.DeployPlan.Description,
+			BusinessUnitID: businessUnit.ID,
+			CIConfigID:     ciConfig.ID,
+			CDConfigID:     cdConfig.ID,
+			InstanceOAMID:  instanceOAM.ID,
 		}
 		if err := q.DeployPlan.Create(deployPlan); err != nil {
 			return err
 		}
 
-		result = aggregateDTO(project, businessUnit, ciConfig, cdConfig, instanceConfig, deployPlan)
+		result = aggregateDTO(project, businessUnit, ciConfig, cdConfig, instanceOAM, deployPlan)
 		return nil
 	})
 	if err != nil {

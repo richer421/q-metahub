@@ -29,7 +29,7 @@ type CreateCDConfigReq struct {
 	GitOps          map[string]any `json:"git_ops"`
 }
 
-type CreateInstanceConfigReq struct {
+type CreateInstanceOAMReq struct {
 	Name            string         `json:"name"`
 	Env             string         `json:"env"`
 	SchemaVersion   string         `json:"schema_version"`
@@ -43,12 +43,12 @@ type CreateDeployPlanReq struct {
 }
 
 type CreateDeployPlanAggregateReq struct {
-	Project        CreateProjectReq        `json:"project"`
-	BusinessUnit   CreateBusinessUnitReq   `json:"business_unit"`
-	CIConfig       CreateCIConfigReq       `json:"ci_config"`
-	CDConfig       CreateCDConfigReq       `json:"cd_config"`
-	InstanceConfig CreateInstanceConfigReq `json:"instance_config"`
-	DeployPlan     CreateDeployPlanReq     `json:"deploy_plan"`
+	Project      CreateProjectReq      `json:"project"`
+	BusinessUnit CreateBusinessUnitReq `json:"business_unit"`
+	CIConfig     CreateCIConfigReq     `json:"ci_config"`
+	CDConfig     CreateCDConfigReq     `json:"cd_config"`
+	InstanceOAM  CreateInstanceOAMReq  `json:"instance_oam"`
+	DeployPlan   CreateDeployPlanReq   `json:"deploy_plan"`
 }
 
 type ProjectDTO struct {
@@ -93,7 +93,7 @@ type CDConfigDTO struct {
 	GitOps          map[string]any `json:"git_ops,omitempty"`
 }
 
-type InstanceConfigDTO struct {
+type InstanceOAMDTO struct {
 	ID              int64          `json:"id"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
@@ -106,31 +106,31 @@ type InstanceConfigDTO struct {
 }
 
 type DeployPlanDTO struct {
-	ID               int64     `json:"id"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	Name             string    `json:"name"`
-	Description      string    `json:"description"`
-	BusinessUnitID   int64     `json:"business_unit_id"`
-	CIConfigID       int64     `json:"ci_config_id"`
-	CDConfigID       int64     `json:"cd_config_id"`
-	InstanceConfigID int64     `json:"instance_config_id"`
+	ID             int64     `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	BusinessUnitID int64     `json:"business_unit_id"`
+	CIConfigID     int64     `json:"ci_config_id"`
+	CDConfigID     int64     `json:"cd_config_id"`
+	InstanceOAMID  int64     `json:"instance_oam_id"`
 }
 
 type DeployPlanAggregateDTO struct {
-	Project        ProjectDTO        `json:"project"`
-	BusinessUnit   BusinessUnitDTO   `json:"business_unit"`
-	CIConfig       CIConfigDTO       `json:"ci_config"`
-	CDConfig       CDConfigDTO       `json:"cd_config"`
-	InstanceConfig InstanceConfigDTO `json:"instance_config"`
-	DeployPlan     DeployPlanDTO     `json:"deploy_plan"`
+	Project      ProjectDTO      `json:"project"`
+	BusinessUnit BusinessUnitDTO `json:"business_unit"`
+	CIConfig     CIConfigDTO     `json:"ci_config"`
+	CDConfig     CDConfigDTO     `json:"cd_config"`
+	InstanceOAM  InstanceOAMDTO  `json:"instance_oam"`
+	DeployPlan   DeployPlanDTO   `json:"deploy_plan"`
 }
 
 type BusinessUnitFullSpecDTO struct {
-	Project         ProjectDTO          `json:"project"`
-	BusinessUnit    BusinessUnitDTO     `json:"business_unit"`
-	CIConfigs       []CIConfigDTO       `json:"ci_configs"`
-	CDConfigs       []CDConfigDTO       `json:"cd_configs"`
-	InstanceConfigs []InstanceConfigDTO `json:"instance_configs"`
-	DeployPlans     []DeployPlanDTO     `json:"deploy_plans"`
+	Project      ProjectDTO       `json:"project"`
+	BusinessUnit BusinessUnitDTO  `json:"business_unit"`
+	CIConfigs    []CIConfigDTO    `json:"ci_configs"`
+	CDConfigs    []CDConfigDTO    `json:"cd_configs"`
+	InstanceOAMs []InstanceOAMDTO `json:"instance_oams"`
+	DeployPlans  []DeployPlanDTO  `json:"deploy_plans"`
 }
