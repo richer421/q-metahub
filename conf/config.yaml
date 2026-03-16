@@ -9,8 +9,8 @@ server:
 mysql:
   host: "127.0.0.1"
   port: 30306
-  user: "root"
-  password: "root123"
+  user: "appuser"
+  password: "apppass123"
   database: "appdb"
   max_open_conns: 100
   max_idle_conns: 10
