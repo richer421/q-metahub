@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +9,7 @@ import (
 	appmetadata "github.com/richer421/q-metahub/app/metadata"
 	"github.com/richer421/q-metahub/app/metadata/vo"
 	"github.com/richer421/q-metahub/http/common"
-	"github.com/richer421/q-metahub/infra/mysql/dao"
+	openmodeloam "github.com/richer421/q-metahub/pkg/openModel/oam"
 )
 
 type MetadataAPI struct {
@@ -23,61 +23,8 @@ func NewMetadataAPI() *MetadataAPI {
 func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	api := NewMetadataAPI()
 
-	v1.POST("/projects", api.CreateProject)
-	v1.POST("/business-units", api.CreateBusinessUnit)
-	v1.POST("/ci-configs", api.CreateCIConfig)
-	v1.POST("/cd-configs", api.CreateCDConfig)
 	v1.POST("/instance-oams", api.CreateInstanceOAM)
-	v1.POST("/deploy-plans", api.CreateDeployPlanAggregate)
 	v1.GET("/deploy-plans/:id", api.GetDeployPlan)
-	v1.GET("/deploy-plans/:id/full-spec", api.GetDeployPlanFullSpec)
-	v1.GET("/business-units/:id/full-spec", api.GetBusinessUnitFullSpec)
-	v1.POST("/demo/seed", api.SeedDemoSetup)
-}
-
-func (a *MetadataAPI) CreateProject(c *gin.Context) {
-	var req vo.CreateProjectReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, err)
-		return
-	}
-
-	project := &dao.Project
-	entity := &struct {
-		GitID   int64  `json:"git_id"`
-		Name    string `json:"name"`
-		RepoURL string `json:"repo_url"`
-	}{GitID: req.GitID, Name: req.Name, RepoURL: req.RepoURL}
-
-	common.OK(c, entity)
-	_ = project
-}
-
-func (a *MetadataAPI) CreateBusinessUnit(c *gin.Context) {
-	var req vo.CreateBusinessUnitReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, err)
-		return
-	}
-	common.OK(c, req)
-}
-
-func (a *MetadataAPI) CreateCIConfig(c *gin.Context) {
-	var req vo.CreateCIConfigReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, err)
-		return
-	}
-	common.OK(c, req)
-}
-
-func (a *MetadataAPI) CreateCDConfig(c *gin.Context) {
-	var req vo.CreateCDConfigReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, err)
-		return
-	}
-	common.OK(c, req)
 }
 
 func (a *MetadataAPI) CreateInstanceOAM(c *gin.Context) {
@@ -89,49 +36,10 @@ func (a *MetadataAPI) CreateInstanceOAM(c *gin.Context) {
 	common.OK(c, req)
 }
 
-func (a *MetadataAPI) CreateDeployPlanAggregate(c *gin.Context) {
-	var req vo.CreateDeployPlanAggregateReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, err)
-		return
-	}
-
-	res, err := a.svc.CreateDeployPlanAggregate(c.Request.Context(), &req)
-	if err != nil {
-		common.Fail(c, err)
-		return
-	}
-	common.OK(c, res)
-}
-
 func (a *MetadataAPI) GetDeployPlan(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		common.Fail(c, fmt.Errorf("invalid deploy plan id"))
-		return
-	}
-
-	entity, err := dao.Q.WithContext(c.Request.Context()).DeployPlan.Where(dao.DeployPlan.ID.Eq(id)).First()
-	if err != nil {
 		common.Fail(c, err)
-		return
-	}
-
-	common.OK(c, gin.H{
-		"id":               entity.ID,
-		"name":             entity.Name,
-		"description":      entity.Description,
-		"business_unit_id": entity.BusinessUnitID,
-		"ci_config_id":     entity.CIConfigID,
-		"cd_config_id":     entity.CDConfigID,
-		"instance_oam_id":  entity.InstanceOAMID,
-	})
-}
-
-func (a *MetadataAPI) GetDeployPlanFullSpec(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		common.Fail(c, fmt.Errorf("invalid deploy plan id"))
 		return
 	}
 
@@ -140,29 +48,50 @@ func (a *MetadataAPI) GetDeployPlanFullSpec(c *gin.Context) {
 		common.Fail(c, err)
 		return
 	}
-	common.OK(c, res)
+	common.OK(c, toOpenModelDeployPlanSpec(res))
 }
 
-func (a *MetadataAPI) GetBusinessUnitFullSpec(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		common.Fail(c, fmt.Errorf("invalid business unit id"))
-		return
+func toOpenModelDeployPlanSpec(in *vo.DeployPlanAggregateDTO) *openmodeloam.DeployPlanSpecDTO {
+	if in == nil {
+		return nil
 	}
-
-	res, err := a.svc.GetBusinessUnitFullSpec(c.Request.Context(), id)
-	if err != nil {
-		common.Fail(c, err)
-		return
+	return &openmodeloam.DeployPlanSpecDTO{
+		Project: openmodeloam.ProjectDTO{
+			ID:      in.Project.ID,
+			Name:    in.Project.Name,
+			RepoURL: in.Project.RepoURL,
+		},
+		BusinessUnit: openmodeloam.BusinessUnitDTO{
+			ID:   in.BusinessUnit.ID,
+			Name: in.BusinessUnit.Name,
+		},
+		CDConfig: openmodeloam.CDConfigDTO{
+			ID:              in.CDConfig.ID,
+			GitOps:          in.CDConfig.GitOps,
+			ReleaseStrategy: in.CDConfig.ReleaseStrategy,
+		},
+		InstanceOAM: openmodeloam.InstanceOAMDTO{
+			ID:             in.InstanceOAM.ID,
+			Env:            in.InstanceOAM.Env,
+			SchemaVersion:  in.InstanceOAM.SchemaVersion,
+			OAMApplication: toOpenModelOAMApplication(in.InstanceOAM.OAMApplication),
+		},
+		DeployPlan: openmodeloam.DeployPlanDTO{
+			ID:            in.DeployPlan.ID,
+			CDConfigID:    in.DeployPlan.CDConfigID,
+			InstanceOAMID: in.DeployPlan.InstanceOAMID,
+		},
 	}
-	common.OK(c, res)
 }
 
-func (a *MetadataAPI) SeedDemoSetup(c *gin.Context) {
-	res, err := a.svc.SeedDemoSetup(c.Request.Context())
+func toOpenModelOAMApplication(in any) openmodeloam.OAMApplication {
+	data, err := json.Marshal(in)
 	if err != nil {
-		common.Fail(c, err)
-		return
+		return openmodeloam.OAMApplication{}
 	}
-	common.OK(c, res)
+	var out openmodeloam.OAMApplication
+	if err := json.Unmarshal(data, &out); err != nil {
+		return openmodeloam.OAMApplication{}
+	}
+	return out
 }

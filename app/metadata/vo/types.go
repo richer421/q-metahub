@@ -1,54 +1,38 @@
 package vo
 
-import "time"
+import (
+	"time"
 
-type CreateProjectReq struct {
-	GitID   int64  `json:"git_id"`
-	Name    string `json:"name"`
-	RepoURL string `json:"repo_url"`
-}
-
-type CreateBusinessUnitReq struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type CreateCIConfigReq struct {
-	Name          string         `json:"name"`
-	ImageRegistry string         `json:"image_registry"`
-	ImageRepo     string         `json:"image_repo"`
-	ImageTagRule  map[string]any `json:"image_tag_rule"`
-	BuildSpec     map[string]any `json:"build_spec"`
-}
-
-type CreateCDConfigReq struct {
-	Name            string         `json:"name"`
-	RenderEngine    string         `json:"render_engine"`
-	ValuesYAML      string         `json:"values_yaml"`
-	ReleaseStrategy map[string]any `json:"release_strategy"`
-	GitOps          map[string]any `json:"git_ops"`
-}
+	"github.com/richer421/q-metahub/infra/mysql/model"
+)
 
 type CreateInstanceOAMReq struct {
-	Name            string         `json:"name"`
-	Env             string         `json:"env"`
-	SchemaVersion   string         `json:"schema_version"`
-	OAMApplication  map[string]any `json:"oam_application"`
-	FrontendPayload map[string]any `json:"frontend_payload"`
+	BusinessUnitID  int64                     `json:"business_unit_id"`
+	InstanceName    string                    `json:"instance_name"`
+	Env             string                    `json:"env"`
+	SchemaVersion   string                    `json:"schema_version"`
+	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
 }
 
-type CreateDeployPlanReq struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+// InstanceFrontendPayloadVO is UI-facing form schema.
+type InstanceFrontendPayloadVO struct {
+	Basic    InstanceBasicVO    `json:"basic,omitempty"`
+	Extended InstanceExtendedVO `json:"extended,omitempty"`
+	Advanced InstanceAdvancedVO `json:"advanced,omitempty"`
 }
 
-type CreateDeployPlanAggregateReq struct {
-	Project      CreateProjectReq      `json:"project"`
-	BusinessUnit CreateBusinessUnitReq `json:"business_unit"`
-	CIConfig     CreateCIConfigReq     `json:"ci_config"`
-	CDConfig     CreateCDConfigReq     `json:"cd_config"`
-	InstanceOAM  CreateInstanceOAMReq  `json:"instance_oam"`
-	DeployPlan   CreateDeployPlanReq   `json:"deploy_plan"`
+type InstanceBasicVO struct {
+	Name string `json:"name,omitempty"`
+	Env  string `json:"env,omitempty"`
+}
+
+type InstanceExtendedVO struct {
+	NetworkMode string `json:"network_mode,omitempty"`
+	Ports       []int  `json:"ports,omitempty"`
+}
+
+type InstanceAdvancedVO struct {
+	Replicas *int32 `json:"replicas,omitempty"`
 }
 
 type ProjectDTO struct {
@@ -94,15 +78,15 @@ type CDConfigDTO struct {
 }
 
 type InstanceOAMDTO struct {
-	ID              int64          `json:"id"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	Name            string         `json:"name"`
-	BusinessUnitID  int64          `json:"business_unit_id"`
-	Env             string         `json:"env"`
-	SchemaVersion   string         `json:"schema_version"`
-	OAMApplication  map[string]any `json:"oam_application"`
-	FrontendPayload map[string]any `json:"frontend_payload"`
+	ID              int64                     `json:"id"`
+	CreatedAt       time.Time                 `json:"created_at"`
+	UpdatedAt       time.Time                 `json:"updated_at"`
+	Name            string                    `json:"name"`
+	BusinessUnitID  int64                     `json:"business_unit_id"`
+	Env             string                    `json:"env"`
+	SchemaVersion   string                    `json:"schema_version"`
+	OAMApplication  model.OAMApplication      `json:"oam_application"`
+	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
 }
 
 type DeployPlanDTO struct {

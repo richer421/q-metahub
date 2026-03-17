@@ -7,8 +7,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	metadatavo "github.com/richer421/q-metahub/app/metadata/vo"
 )
 
 func TestServerRegistersMetadataTools(t *testing.T) {
@@ -20,7 +18,6 @@ func TestServerRegistersMetadataTools(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	assert.Contains(t, names, "seed_demo_setup")
 	assert.Contains(t, names, "get_deploy_plan")
 	assert.Contains(t, names, "get_business_unit_full_spec")
 }
@@ -39,12 +36,11 @@ func TestGetDeployPlanToolUsesDeployPlanIDInput(t *testing.T) {
 	t.Fatal("get_deploy_plan tool not registered")
 }
 
-func TestSeedDemoSetupToolReturnsStructuredResult(t *testing.T) {
+func TestJSONResultStructuredPayload(t *testing.T) {
 	server := NewServer()
-	payload := &metadatavo.DeployPlanAggregateDTO{
-		Project:      metadatavo.ProjectDTO{ID: 1, Name: "q-demo-project"},
-		BusinessUnit: metadatavo.BusinessUnitDTO{ID: 2, Name: "q-demo"},
-		DeployPlan:   metadatavo.DeployPlanDTO{ID: 6, Name: "q-demo-dev-plan"},
+	payload := map[string]any{
+		"project":     map[string]any{"id": 1},
+		"deploy_plan": map[string]any{"id": 6},
 	}
 
 	res, err := server.jsonResult(payload)

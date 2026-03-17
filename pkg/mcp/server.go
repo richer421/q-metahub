@@ -73,23 +73,6 @@ func (s *Server) registerTools(server *mcp.Server) {
 func (s *Server) metadataToolSpecs() []toolSpec {
 	return []toolSpec{
 		{
-			Name:        "seed_demo_setup",
-			Description: "Create or return the q-demo demo metadata setup",
-			Register: func(server *mcp.Server) {
-				mcp.AddTool(server, &mcp.Tool{
-					Name:        "seed_demo_setup",
-					Description: "Create or return the q-demo demo metadata setup",
-				}, func(ctx context.Context, req *mcp.CallToolRequest, args struct{}) (*mcp.CallToolResult, any, error) {
-					res, err := s.metadataSvc.SeedDemoSetup(ctx)
-					if err != nil {
-						return s.errorResult(err), nil, nil
-					}
-					out, err := s.jsonResult(res)
-					return out, nil, err
-				})
-			},
-		},
-		{
 			Name:        "get_deploy_plan",
 			Description: "Get a deploy plan by ID",
 			Register: func(server *mcp.Server) {

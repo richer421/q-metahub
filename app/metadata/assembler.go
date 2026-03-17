@@ -1,86 +1,26 @@
 package metadata
 
 import (
-	"encoding/json"
-
 	"github.com/richer421/q-metahub/app/metadata/vo"
 	"github.com/richer421/q-metahub/infra/mysql/model"
 )
 
-func buildCIConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.CIConfig, error) {
-	var imageTagRule model.ImageTagRule
-	if err := convertJSONMap(req.CIConfig.ImageTagRule, &imageTagRule); err != nil {
-		return nil, err
-	}
-	var buildSpec model.BuildSpec
-	if err := convertJSONMap(req.CIConfig.BuildSpec, &buildSpec); err != nil {
-		return nil, err
-	}
-	return &model.CIConfig{
-		Name:           req.CIConfig.Name,
-		BusinessUnitID: businessUnitID,
-		ImageRegistry:  req.CIConfig.ImageRegistry,
-		ImageRepo:      req.CIConfig.ImageRepo,
-		ImageTagRule:   imageTagRule,
-		BuildSpec:      buildSpec,
-	}, nil
-}
+func buildInstanceOAM(req vo.CreateInstanceOAMReq, businessUnitID int64) *model.InstanceOAM {
+	form := frontendVOToForm(req.FrontendPayload, req.Name, req.Env)
+	oamApplication := normalizeOAMApplication(formToOAM(form), req.Name)
 
-func buildCDConfig(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.CDConfig, error) {
-	var releaseStrategy model.ReleaseStrategy
-	if err := convertJSONMap(req.CDConfig.ReleaseStrategy, &releaseStrategy); err != nil {
-		return nil, err
-	}
-	var gitOps model.GitOpsConfig
-	if len(req.CDConfig.GitOps) > 0 {
-		if err := convertJSONMap(req.CDConfig.GitOps, &gitOps); err != nil {
-			return nil, err
-		}
-	}
-	return &model.CDConfig{
-		Name:            req.CDConfig.Name,
-		BusinessUnitID:  businessUnitID,
-		RenderEngine:    req.CDConfig.RenderEngine,
-		ValuesYAML:      req.CDConfig.ValuesYAML,
-		ReleaseStrategy: releaseStrategy,
-		GitOps:          &gitOps,
-	}, nil
-}
-
-func buildInstanceOAM(req *vo.CreateDeployPlanAggregateReq, businessUnitID int64) (*model.InstanceOAM, error) {
-	var oamApplication model.OAMApplication
-	if err := convertJSONMap(req.InstanceOAM.OAMApplication, &oamApplication); err != nil {
-		return nil, err
-	}
-	var frontendPayload model.InstanceOAMPayload
-	if err := convertJSONMap(req.InstanceOAM.FrontendPayload, &frontendPayload); err != nil {
-		return nil, err
-	}
-
-	schemaVersion := req.InstanceOAM.SchemaVersion
+	schemaVersion := req.SchemaVersion
 	if schemaVersion == "" {
-		schemaVersion = "v1alpha1"
+		schemaVersion = defaultSchemaVersion
 	}
 
 	return &model.InstanceOAM{
-		Name:            req.InstanceOAM.Name,
-		BusinessUnitID:  businessUnitID,
-		Env:             req.InstanceOAM.Env,
-		SchemaVersion:   schemaVersion,
-		OAMApplication:  oamApplication,
-		FrontendPayload: frontendPayload,
-	}, nil
-}
-
-func convertJSONMap(input map[string]any, target any) error {
-	if input == nil {
-		return nil
+		Name:           req.Name,
+		BusinessUnitID: businessUnitID,
+		Env:            req.Env,
+		SchemaVersion:  schemaVersion,
+		OAMApplication: oamApplication,
 	}
-	data, err := json.Marshal(input)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, target)
 }
 
 func aggregateDTO(project *model.Project, businessUnit *model.BusinessUnit, ciConfig *model.CIConfig, cdConfig *model.CDConfig, instanceOAM *model.InstanceOAM, deployPlan *model.DeployPlan) *vo.DeployPlanAggregateDTO {
@@ -173,6 +113,7 @@ func toCDConfigDTO(in *model.CDConfig) vo.CDConfigDTO {
 }
 
 func toInstanceOAMDTO(in *model.InstanceOAM) vo.InstanceOAMDTO {
+	frontendPayload := formToFrontendVO(oamToForm(in.OAMApplication, in.Name, in.Env))
 	return vo.InstanceOAMDTO{
 		ID:              in.ID,
 		CreatedAt:       in.CreatedAt,
@@ -181,8 +122,8 @@ func toInstanceOAMDTO(in *model.InstanceOAM) vo.InstanceOAMDTO {
 		BusinessUnitID:  in.BusinessUnitID,
 		Env:             in.Env,
 		SchemaVersion:   in.SchemaVersion,
-		OAMApplication:  modelToMap(in.OAMApplication),
-		FrontendPayload: modelToMap(in.FrontendPayload),
+		OAMApplication:  in.OAMApplication,
+		FrontendPayload: frontendPayload,
 	}
 }
 
@@ -237,19 +178,4 @@ func derefString(v *string) string {
 		return ""
 	}
 	return *v
-}
-
-func modelToMap(v any) map[string]any {
-	if v == nil {
-		return nil
-	}
-	data, err := json.Marshal(v)
-	if err != nil {
-		return nil
-	}
-	var out map[string]any
-	if err := json.Unmarshal(data, &out); err != nil {
-		return nil
-	}
-	return out
 }
