@@ -1,39 +1,45 @@
 package oam
 
-// DeployPlanSpecDTO defines the stable open model used by downstream services
+import (
+	"encoding/json"
+
+	"github.com/richer421/q-metahub/app/metadata/vo"
+)
+
+// DeployPlanSpecVO defines the stable open model used by downstream services
 // (e.g. q-deploy) when reading deploy plan full-spec from q-metahub.
-type DeployPlanSpecDTO struct {
-	Project      ProjectDTO      `json:"project"`
-	BusinessUnit BusinessUnitDTO `json:"business_unit"`
-	CDConfig     CDConfigDTO     `json:"cd_config"`
-	InstanceOAM  InstanceOAMDTO  `json:"instance_oam"`
-	DeployPlan   DeployPlanDTO   `json:"deploy_plan"`
+type DeployPlanSpecVO struct {
+	Project      ProjectVO      `json:"project"`
+	BusinessUnit BusinessUnitVO `json:"business_unit"`
+	CDConfig     CDConfigVO     `json:"cd_config"`
+	InstanceOAM  InstanceOAMVO  `json:"instance_oam"`
+	DeployPlan   DeployPlanVO   `json:"deploy_plan"`
 }
 
-type ProjectDTO struct {
+type ProjectVO struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	RepoURL string `json:"repo_url"`
 }
 
-type BusinessUnitDTO struct {
+type BusinessUnitVO struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
-type CDConfigDTO struct {
+type CDConfigVO struct {
 	ID              int64          `json:"id"`
 	GitOps          map[string]any `json:"git_ops"`
 	ReleaseStrategy map[string]any `json:"release_strategy"`
 }
 
-type DeployPlanDTO struct {
+type DeployPlanVO struct {
 	ID            int64 `json:"id"`
 	CDConfigID    int64 `json:"cd_config_id"`
 	InstanceOAMID int64 `json:"instance_oam_id"`
 }
 
-type InstanceOAMDTO struct {
+type InstanceOAMVO struct {
 	ID             int64          `json:"id"`
 	Env            string         `json:"env"`
 	SchemaVersion  string         `json:"schema_version"`
@@ -115,4 +121,49 @@ type NetworkTrait struct {
 
 type K8sServiceTrait struct {
 	Ports []int `json:"ports,omitempty"`
+}
+
+func ToOpenModelDeployPlan(in *vo.DeployPlanAggregateVO) *DeployPlanSpecVO {
+	if in == nil {
+		return nil
+	}
+	return &DeployPlanSpecVO{
+		Project: ProjectVO{
+			ID:      in.Project.ID,
+			Name:    in.Project.Name,
+			RepoURL: in.Project.RepoURL,
+		},
+		BusinessUnit: BusinessUnitVO{
+			ID:   in.BusinessUnit.ID,
+			Name: in.BusinessUnit.Name,
+		},
+		CDConfig: CDConfigVO{
+			ID:              in.CDConfig.ID,
+			GitOps:          in.CDConfig.GitOps,
+			ReleaseStrategy: in.CDConfig.ReleaseStrategy,
+		},
+		InstanceOAM: InstanceOAMVO{
+			ID:             in.InstanceOAM.ID,
+			Env:            in.InstanceOAM.Env,
+			SchemaVersion:  in.InstanceOAM.SchemaVersion,
+			OAMApplication: toOpenModelOAMApplication(in.InstanceOAM.OAMApplication),
+		},
+		DeployPlan: DeployPlanVO{
+			ID:            in.DeployPlan.ID,
+			CDConfigID:    in.DeployPlan.CDConfigID,
+			InstanceOAMID: in.DeployPlan.InstanceOAMID,
+		},
+	}
+}
+
+func toOpenModelOAMApplication(in any) OAMApplication {
+	data, err := json.Marshal(in)
+	if err != nil {
+		return OAMApplication{}
+	}
+	var out OAMApplication
+	if err := json.Unmarshal(data, &out); err != nil {
+		return OAMApplication{}
+	}
+	return out
 }

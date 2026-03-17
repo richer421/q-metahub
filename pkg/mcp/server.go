@@ -8,26 +8,16 @@ import (
 	"os"
 	"strings"
 
-	appmetadata "github.com/richer421/q-metahub/app/metadata"
-	"github.com/richer421/q-metahub/conf"
-
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/richer421/q-metahub/app/metadata"
+	"github.com/richer421/q-metahub/conf"
+	openmodeloam "github.com/richer421/q-metahub/pkg/openModel/oam"
 )
 
-type toolSpec struct {
-	Name        string
-	Description string
-	Register    func(*mcp.Server)
-}
-
-type Server struct {
-	metadataSvc *appmetadata.Service
-}
+type Server struct{}
 
 func NewServer() *Server {
-	return &Server{
-		metadataSvc: appmetadata.NewService(),
-	}
+	return &Server{}
 }
 
 func (s *Server) Run() error {
@@ -37,12 +27,10 @@ func (s *Server) Run() error {
 	}, nil)
 
 	s.registerTools(server)
-
 	return server.Run(context.Background(), &mcp.StdioTransport{})
 }
 
 func (s *Server) registerTools(server *mcp.Server) {
-	// Tool: read_logs
 	type readLogsArgs struct {
 		Lines int `json:"lines,omitempty" jsonschema:"Number of lines to read (default 100)"`
 	}
@@ -56,63 +44,27 @@ func (s *Server) registerTools(server *mcp.Server) {
 		}
 		result, err := s.handleReadLogs(lines)
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Error: %v", err)}},
-			}, nil, nil
+			return s.errorResult(err), nil, nil
 		}
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
 	})
 
-	for _, spec := range s.metadataToolSpecs() {
-		spec.Register(server)
+	type getDeployPlanArgs struct {
+		DeployPlanID int64 `json:"deploy_plan_id"`
 	}
-}
-
-func (s *Server) metadataToolSpecs() []toolSpec {
-	return []toolSpec{
-		{
-			Name:        "get_deploy_plan",
-			Description: "Get a deploy plan by ID",
-			Register: func(server *mcp.Server) {
-				type args struct {
-					DeployPlanID int64 `json:"deploy_plan_id"`
-				}
-				mcp.AddTool(server, &mcp.Tool{
-					Name:        "get_deploy_plan",
-					Description: "Get deploy plan full spec by deploy plan ID",
-				}, func(ctx context.Context, req *mcp.CallToolRequest, in args) (*mcp.CallToolResult, any, error) {
-					res, err := s.metadataSvc.GetDeployPlanFullSpec(ctx, in.DeployPlanID)
-					if err != nil {
-						return s.errorResult(err), nil, nil
-					}
-					out, err := s.jsonResult(res)
-					return out, nil, err
-				})
-			},
-		},
-		{
-			Name:        "get_business_unit_full_spec",
-			Description: "Get business unit full spec by business unit ID",
-			Register: func(server *mcp.Server) {
-				type args struct {
-					BusinessUnitID int64 `json:"business_unit_id"`
-				}
-				mcp.AddTool(server, &mcp.Tool{
-					Name:        "get_business_unit_full_spec",
-					Description: "Get business unit full spec by business unit ID",
-				}, func(ctx context.Context, req *mcp.CallToolRequest, in args) (*mcp.CallToolResult, any, error) {
-					res, err := s.metadataSvc.GetBusinessUnitFullSpec(ctx, in.BusinessUnitID)
-					if err != nil {
-						return s.errorResult(err), nil, nil
-					}
-					out, err := s.jsonResult(res)
-					return out, nil, err
-				})
-			},
-		},
-	}
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_open_model_deploy_plan",
+		Description: "Get open model deploy plan by deploy plan ID",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, in getDeployPlanArgs) (*mcp.CallToolResult, any, error) {
+		res, err := metadata.NewApp(ctx).GetDeployPlan(in.DeployPlanID)
+		if err != nil {
+			return s.errorResult(err), nil, nil
+		}
+		out, err := s.jsonResult(openmodeloam.ToOpenModelDeployPlan(res))
+		return out, nil, err
+	})
 }
 
 func (s *Server) jsonResult(v any) (*mcp.CallToolResult, error) {
@@ -141,7 +93,6 @@ func (s *Server) handleReadLogs(lines int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return content, nil
 }
 

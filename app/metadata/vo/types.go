@@ -10,32 +10,32 @@ type CreateInstanceOAMReq struct {
 	BusinessUnitID  int64                     `json:"business_unit_id"`
 	InstanceName    string                    `json:"instance_name"`
 	Env             string                    `json:"env"`
-	SchemaVersion   string                    `json:"schema_version"`
 	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
 }
 
 // InstanceFrontendPayloadVO is UI-facing form schema.
 type InstanceFrontendPayloadVO struct {
-	Basic    InstanceBasicVO    `json:"basic,omitempty"`
-	Extended InstanceExtendedVO `json:"extended,omitempty"`
-	Advanced InstanceAdvancedVO `json:"advanced,omitempty"`
+	Basic    InstanceBasicVO     `json:"basic"`
+	Extended *InstanceExtendedVO `json:"extended,omitempty"`
 }
 
 type InstanceBasicVO struct {
-	Name string `json:"name,omitempty"`
-	Env  string `json:"env,omitempty"`
+	Replicas  *int32              `json:"replicas,omitempty"`
+	Container InstanceContainerVO `json:"container"` // 业务容器的基础配置
+}
+
+type InstanceContainerVO struct {
+	Name  string  `json:"name,omitempty"`
+	Image string  `json:"image,omitempty"`
+	Ports []int32 `json:"ports,omitempty"`
 }
 
 type InstanceExtendedVO struct {
-	NetworkMode string `json:"network_mode,omitempty"`
-	Ports       []int  `json:"ports,omitempty"`
+	NetworkMode  string  `json:"network_mode,omitempty"`
+	ServicePorts []int32 `json:"service_ports,omitempty"`
 }
 
-type InstanceAdvancedVO struct {
-	Replicas *int32 `json:"replicas,omitempty"`
-}
-
-type ProjectDTO struct {
+type ProjectVO struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -44,7 +44,7 @@ type ProjectDTO struct {
 	RepoURL   string    `json:"repo_url"`
 }
 
-type BusinessUnitDTO struct {
+type BusinessUnitVO struct {
 	ID          int64     `json:"id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -53,7 +53,7 @@ type BusinessUnitDTO struct {
 	ProjectID   int64     `json:"project_id"`
 }
 
-type CIConfigDTO struct {
+type CIConfigVO struct {
 	ID             int64          `json:"id"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
@@ -65,7 +65,7 @@ type CIConfigDTO struct {
 	BuildSpec      map[string]any `json:"build_spec"`
 }
 
-type CDConfigDTO struct {
+type CDConfigVO struct {
 	ID              int64          `json:"id"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
@@ -77,7 +77,7 @@ type CDConfigDTO struct {
 	GitOps          map[string]any `json:"git_ops,omitempty"`
 }
 
-type InstanceOAMDTO struct {
+type InstanceOAMVO struct {
 	ID              int64                     `json:"id"`
 	CreatedAt       time.Time                 `json:"created_at"`
 	UpdatedAt       time.Time                 `json:"updated_at"`
@@ -89,7 +89,7 @@ type InstanceOAMDTO struct {
 	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
 }
 
-type DeployPlanDTO struct {
+type DeployPlanVO struct {
 	ID             int64     `json:"id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
@@ -101,20 +101,20 @@ type DeployPlanDTO struct {
 	InstanceOAMID  int64     `json:"instance_oam_id"`
 }
 
-type DeployPlanAggregateDTO struct {
-	Project      ProjectDTO      `json:"project"`
-	BusinessUnit BusinessUnitDTO `json:"business_unit"`
-	CIConfig     CIConfigDTO     `json:"ci_config"`
-	CDConfig     CDConfigDTO     `json:"cd_config"`
-	InstanceOAM  InstanceOAMDTO  `json:"instance_oam"`
-	DeployPlan   DeployPlanDTO   `json:"deploy_plan"`
+type DeployPlanAggregateVO struct {
+	Project      ProjectVO      `json:"project"`
+	BusinessUnit BusinessUnitVO `json:"business_unit"`
+	CIConfig     CIConfigVO     `json:"ci_config"`
+	CDConfig     CDConfigVO     `json:"cd_config"`
+	InstanceOAM  InstanceOAMVO  `json:"instance_oam"`
+	DeployPlan   DeployPlanVO   `json:"deploy_plan"`
 }
 
-type BusinessUnitFullSpecDTO struct {
-	Project      ProjectDTO       `json:"project"`
-	BusinessUnit BusinessUnitDTO  `json:"business_unit"`
-	CIConfigs    []CIConfigDTO    `json:"ci_configs"`
-	CDConfigs    []CDConfigDTO    `json:"cd_configs"`
-	InstanceOAMs []InstanceOAMDTO `json:"instance_oams"`
-	DeployPlans  []DeployPlanDTO  `json:"deploy_plans"`
+type BusinessUnitFullSpecVO struct {
+	Project      ProjectVO       `json:"project"`
+	BusinessUnit BusinessUnitVO  `json:"business_unit"`
+	CIConfigs    []CIConfigVO    `json:"ci_configs"`
+	CDConfigs    []CDConfigVO    `json:"cd_configs"`
+	InstanceOAMs []InstanceOAMVO `json:"instance_oams"`
+	DeployPlans  []DeployPlanVO  `json:"deploy_plans"`
 }

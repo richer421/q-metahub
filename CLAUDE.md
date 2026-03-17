@@ -41,7 +41,7 @@
 ├── app/                        # 应用层 — 用例编排
 │   └── <module>/
 │       ├── app.go              #   AppService（产品能力与业务能力的编排）
-│       └── vo/                 #   值对象（入参/出参 DTO）
+│       └── vo/                 #   值对象（入参/出参 VO）
 ├── domain/                     # 领域层 — 核心业务逻辑
 │   └── <module>/
 │       └── <module>.go         #   领域服务，直接调用 DAO
