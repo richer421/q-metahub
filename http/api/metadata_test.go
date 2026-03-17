@@ -227,6 +227,137 @@ func TestMetadataAPIGetBusinessUnitFullSpec(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestMetadataAPIListBusinessUnitInstanceOAMs(t *testing.T) {
+	router, mock := setupRouterWithMockDB(t)
+
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE .*business_unit_id.*").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "created_at", "updated_at", "name", "business_unit_id",
+			"env", "schema_version", "oam_application", "frontend_payload",
+		}).AddRow(
+			5,
+			time.Now(),
+			time.Now(),
+			"inst-api-dev",
+			2,
+			"dev",
+			"v1alpha1",
+			[]byte(`{"component":{"type":"pod","properties":{"mainContainer":{"name":"api-server","image":"IMAGE"}}}}`),
+			[]byte(`{"basic":{"name":"inst-api-dev","env":"dev"}}`),
+		))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/business-units/2/instance-oams?env=dev&keyword=api", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	resp := decodeBody(t, w.Body)
+	assert.Equal(t, float64(0), resp["code"])
+	data := resp["data"].([]any)
+	assert.Len(t, data, 1)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestMetadataAPICreateBusinessUnitInstanceOAM(t *testing.T) {
+	router, mock := setupRouterWithMockDB(t)
+
+	mock.ExpectExec("INSERT INTO `instance_oams`").WillReturnResult(sqlmock.NewResult(7, 1))
+
+	reqBody := map[string]any{
+		"name":           "inst-api-test",
+		"env":            "test",
+		"schema_version": "v1alpha1",
+		"oam_application": map[string]any{
+			"apiVersion": "q.oam/v1alpha1",
+			"kind":       "InstanceApplication",
+			"component": map[string]any{
+				"type": "pod",
+				"properties": map[string]any{
+					"mainContainer": map[string]any{
+						"name":  "api-server",
+						"image": "IMAGE",
+					},
+				},
+			},
+		},
+		"frontend_payload": map[string]any{
+			"basic": map[string]any{
+				"name": "inst-api-test",
+			},
+		},
+	}
+
+	data, err := json.Marshal(reqBody)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/business-units/2/instance-oams", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	resp := decodeBody(t, w.Body)
+	assert.Equal(t, float64(0), resp["code"])
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestMetadataAPIUpdateInstanceOAM(t *testing.T) {
+	router, mock := setupRouterWithMockDB(t)
+
+	now := time.Now()
+	mock.ExpectQuery("SELECT \\* FROM `instance_oams` WHERE `instance_oams`.`id` = .*").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "created_at", "updated_at", "name", "business_unit_id",
+			"env", "schema_version", "oam_application", "frontend_payload",
+		}).AddRow(
+			5,
+			now,
+			now,
+			"inst-api-dev",
+			2,
+			"dev",
+			"v1alpha1",
+			[]byte(`{"component":{"type":"pod","properties":{"mainContainer":{"name":"api-server","image":"IMAGE"}}}}`),
+			[]byte(`{"basic":{"name":"inst-api-dev"}}`),
+		))
+	mock.ExpectExec("INSERT INTO `instance_oams`").WillReturnResult(sqlmock.NewResult(5, 1))
+
+	reqBody := map[string]any{
+		"name":           "inst-api-dev",
+		"env":            "dev",
+		"schema_version": "v1alpha1",
+		"oam_application": map[string]any{
+			"apiVersion": "q.oam/v1alpha1",
+			"kind":       "InstanceApplication",
+			"component": map[string]any{
+				"type": "pod",
+				"properties": map[string]any{
+					"mainContainer": map[string]any{
+						"name":  "api-server",
+						"image": "IMAGE",
+					},
+				},
+			},
+		},
+		"frontend_payload": map[string]any{
+			"basic": map[string]any{
+				"name": "inst-api-dev",
+			},
+		},
+	}
+
+	data, err := json.Marshal(reqBody)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/instance-oams/5", bytes.NewReader(data))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	resp := decodeBody(t, w.Body)
+	assert.Equal(t, float64(0), resp["code"])
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestMetadataAPISeedDemoSetup(t *testing.T) {
 	router, mock := setupRouterWithMockDB(t)
 

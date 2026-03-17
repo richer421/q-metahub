@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -28,6 +29,9 @@ func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	v1.POST("/ci-configs", api.CreateCIConfig)
 	v1.POST("/cd-configs", api.CreateCDConfig)
 	v1.POST("/instance-oams", api.CreateInstanceOAM)
+	v1.GET("/business-units/:id/instance-oams", api.ListBusinessUnitInstanceOAMs)
+	v1.POST("/business-units/:id/instance-oams", api.CreateBusinessUnitInstanceOAM)
+	v1.PUT("/instance-oams/:id", api.UpdateInstanceOAM)
 	v1.POST("/deploy-plans", api.CreateDeployPlanAggregate)
 	v1.GET("/deploy-plans/:id", api.GetDeployPlan)
 	v1.GET("/deploy-plans/:id/full-spec", api.GetDeployPlanFullSpec)
@@ -87,6 +91,79 @@ func (a *MetadataAPI) CreateInstanceOAM(c *gin.Context) {
 		return
 	}
 	common.OK(c, req)
+}
+
+func (a *MetadataAPI) ListBusinessUnitInstanceOAMs(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	env := strings.TrimSpace(c.Query("env"))
+	keyword := strings.TrimSpace(c.Query("keyword"))
+
+	res, err := a.svc.ListInstanceOAMs(c.Request.Context(), businessUnitID, env, keyword)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func (a *MetadataAPI) CreateBusinessUnitInstanceOAM(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	var req vo.CreateInstanceOAMReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Env) == "" {
+		common.Fail(c, fmt.Errorf("name and env are required"))
+		return
+	}
+
+	res, err := a.svc.CreateInstanceOAM(c.Request.Context(), businessUnitID, &req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func (a *MetadataAPI) UpdateInstanceOAM(c *gin.Context) {
+	instanceOAMID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid instance oam id"))
+		return
+	}
+
+	var req vo.UpdateInstanceOAMReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Env) == "" {
+		common.Fail(c, fmt.Errorf("name and env are required"))
+		return
+	}
+
+	res, err := a.svc.UpdateInstanceOAM(c.Request.Context(), instanceOAMID, &req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
 }
 
 func (a *MetadataAPI) CreateDeployPlanAggregate(c *gin.Context) {

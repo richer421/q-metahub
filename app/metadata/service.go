@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"strings"
 
 	"github.com/richer421/q-metahub/app/metadata/vo"
 	domainmetadata "github.com/richer421/q-metahub/domain/metadata"
@@ -103,4 +104,98 @@ func (s *Service) GetDeployPlanFullSpec(ctx context.Context, deployPlanID int64)
 		return nil, err
 	}
 	return aggregate.toDTO(), nil
+}
+
+func (s *Service) ListInstanceOAMs(ctx context.Context, businessUnitID int64, env string, keyword string) ([]vo.InstanceOAMDTO, error) {
+	query := dao.Q.WithContext(ctx).
+		InstanceOAM.
+		Where(dao.InstanceOAM.BusinessUnitID.Eq(businessUnitID))
+
+	normalizedEnv := strings.TrimSpace(env)
+	if normalizedEnv != "" {
+		query = query.Where(dao.InstanceOAM.Env.Eq(normalizedEnv))
+	}
+
+	normalizedKeyword := strings.TrimSpace(keyword)
+	if normalizedKeyword != "" {
+		query = query.Where(dao.InstanceOAM.Name.Like("%" + normalizedKeyword + "%"))
+	}
+
+	entities, err := query.Order(dao.InstanceOAM.UpdatedAt.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	return mapInstanceOAMs(entities), nil
+}
+
+func (s *Service) CreateInstanceOAM(ctx context.Context, businessUnitID int64, req *vo.CreateInstanceOAMReq) (*vo.InstanceOAMDTO, error) {
+	var oamApplication model.OAMApplication
+	if err := convertJSONMap(req.OAMApplication, &oamApplication); err != nil {
+		return nil, err
+	}
+
+	var frontendPayload model.InstanceOAMPayload
+	if err := convertJSONMap(req.FrontendPayload, &frontendPayload); err != nil {
+		return nil, err
+	}
+
+	schemaVersion := strings.TrimSpace(req.SchemaVersion)
+	if schemaVersion == "" {
+		schemaVersion = "v1alpha1"
+	}
+
+	entity := &model.InstanceOAM{
+		Name:            strings.TrimSpace(req.Name),
+		BusinessUnitID:  businessUnitID,
+		Env:             strings.TrimSpace(req.Env),
+		SchemaVersion:   schemaVersion,
+		OAMApplication:  oamApplication,
+		FrontendPayload: frontendPayload,
+	}
+
+	if err := dao.Q.WithContext(ctx).InstanceOAM.Create(entity); err != nil {
+		return nil, err
+	}
+
+	dto := toInstanceOAMDTO(entity)
+	return &dto, nil
+}
+
+func (s *Service) UpdateInstanceOAM(ctx context.Context, instanceOAMID int64, req *vo.UpdateInstanceOAMReq) (*vo.InstanceOAMDTO, error) {
+	entity, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(instanceOAMID)).First()
+	if err != nil {
+		return nil, err
+	}
+
+	var oamApplication model.OAMApplication
+	if err := convertJSONMap(req.OAMApplication, &oamApplication); err != nil {
+		return nil, err
+	}
+
+	var frontendPayload model.InstanceOAMPayload
+	if err := convertJSONMap(req.FrontendPayload, &frontendPayload); err != nil {
+		return nil, err
+	}
+
+	schemaVersion := strings.TrimSpace(req.SchemaVersion)
+	if schemaVersion == "" {
+		schemaVersion = entity.SchemaVersion
+	}
+	if schemaVersion == "" {
+		schemaVersion = "v1alpha1"
+	}
+
+	entity.Name = strings.TrimSpace(req.Name)
+	entity.Env = strings.TrimSpace(req.Env)
+	entity.SchemaVersion = schemaVersion
+	entity.OAMApplication = oamApplication
+	entity.FrontendPayload = frontendPayload
+
+	if err := dao.Q.WithContext(ctx).InstanceOAM.Save(entity); err != nil {
+		return nil, err
+	}
+
+	dto := toInstanceOAMDTO(entity)
+	return &dto, nil
 }

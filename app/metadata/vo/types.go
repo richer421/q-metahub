@@ -37,6 +37,14 @@ type CreateInstanceOAMReq struct {
 	FrontendPayload map[string]any `json:"frontend_payload"`
 }
 
+type UpdateInstanceOAMReq struct {
+	Name            string         `json:"name"`
+	Env             string         `json:"env"`
+	SchemaVersion   string         `json:"schema_version"`
+	OAMApplication  map[string]any `json:"oam_application"`
+	FrontendPayload map[string]any `json:"frontend_payload"`
+}
+
 type CreateDeployPlanReq struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
