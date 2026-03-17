@@ -1,4 +1,4 @@
-# 核心数��模型
+# 核心数据模型
 
 系统核心实体及其关系。新增实体时在此注册。
 
@@ -94,24 +94,25 @@
 | BatchRule | BatchRule | 分批规则 |
 | CanaryTrafficRule | *CanaryTrafficRule | 金丝雀流量规则（仅 canary 模式） |
 
-### InstanceConfig（实例配置）
+### InstanceOAM（实例配置）
 
-- **表名**: instance_configs
-- **说明**: 运行态配置，存储 K8s 原生 Spec
+- **表名**: instance_oams
+- **说明**: 运行态配置，存储 OAM-Lite 应用模型与前端编辑态
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
-| Name | varchar(64) | NOT NULL | 配置名称 |
+| Name | varchar(128) | NOT NULL, UNIQUE(与BusinessUnitID/Env组合) | 配置名称 |
+| BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
 | Env | varchar(32) | NOT NULL, INDEX | 环境：dev/test/gray/prod |
-| InstanceType | varchar(32) | NOT NULL | 实例类型：deployment/statefulset/job/cronjob/pod |
-| Spec | json | NOT NULL | K8s 原生工作负载 Spec |
-| AttachResources | json | DEFAULT '{}' | 附加资源（ConfigMap/Secret/Service） |
+| SchemaVersion | varchar(32) | NOT NULL, DEFAULT 'v1alpha1' | 模型版本 |
+| OAMApplication | json | NOT NULL | OAM-Lite 应用定义（component + traits） |
+| FrontendPayload | json | NOT NULL | 前端编辑态回显数据 |
 
 ### DeployPlan（部署计划）
 
 - **表名**: deploy_plans
-- **说明**: 完整配置包，聚合 CI/CD/Instance 配置
+- **说明**: 完整配置包，聚合 CI/CD/InstanceOAM 配置
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -121,7 +122,7 @@
 | BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
 | CIConfigID | int64 | NOT NULL | 关联 CI 配置 |
 | CDConfigID | int64 | NOT NULL | 关联 CD 配置 |
-| InstanceConfigID | int64 | NOT NULL | 关联实例配置 |
+| InstanceOAMID | int64 | NOT NULL | 关联实例配置 |
 
 ### Dependency（依赖）
 
@@ -136,7 +137,7 @@ BusinessUnit 1:N DeployPlan
 BusinessUnit 1:1 CIConfig（默认CI配置）
 DeployPlan 1:1 CIConfig
 DeployPlan 1:1 CDConfig
-DeployPlan 1:1 InstanceConfig
+DeployPlan 1:1 InstanceOAM
 ```
 
 ## 数据流

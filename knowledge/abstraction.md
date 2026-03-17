@@ -38,7 +38,7 @@
 
 - **CD配置**：部署配置，定义发布策略。包含渲染引擎（helm/kustomize/custom）和发布策略（rolling/blue_green/canary + 分批规则）。
 
-- **实例配置**：运行态配置，存储 K8s 原生 Spec（Deployment/StatefulSet/Job/CronJob/Pod），以及附加资源（ConfigMap/Secret/Service）。
+- **实例配置**：运行态配置，基于 OAM-Lite（`oam_application` + `frontend_payload`）描述实例与扩展能力。
 
 - **依赖**：实例运行所需的中间件与基础能力，如 MySQL、Redis、消息队列等（TODO: 暂不实现）。
 
@@ -63,20 +63,11 @@
             │               ├── 分批规则（BatchRule）
             │               └── 金丝雀流量规则（CanaryTrafficRule，仅 canary）
             │
-            └── 实例配置（InstanceConfig）
+            └── 实例配置（InstanceOAM）
                     │
                     ├── 环境配置（dev/test/gray/prod）
-                    ├── 实例类型（deployment/statefulset/job/cronjob/pod）
-                    ├── Spec（K8s 原生结构，JSON 存储）
-                    │       ├── DeploymentSpec
-                    │       ├── StatefulSetSpec
-                    │       ├── JobSpec
-                    │       ├── CronJobSpec
-                    │       └── PodSpec
-                    └── AttachResources（附加资源）
-                            ├── ConfigMaps
-                            ├── Secrets
-                            └── Services
+                    ├── OAMApplication（component + traits）
+                    └── FrontendPayload（前端编辑态）
 ```
 
 ## 动态流转
@@ -99,6 +90,6 @@
 
 4. **CD配置**定义如何部署，供 q-deploy 服务消费；
 
-5. **实例配置**定义运行态参数，包含环境、资源、依赖、附加资源；
+5. **实例配置**定义运行态参数，包含环境、应用组件、traits 能力与前端编辑态；
 
 6. **依赖**可被多个实例配置共享，通过**依赖绑定**建立关联（TODO: 暂不实现）。
