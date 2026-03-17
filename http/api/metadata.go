@@ -14,7 +14,7 @@ func CreateInstanceOAM(c *gin.Context) {
 		common.Fail(c, err)
 		return
 	}
-	res, err := metadata.NewApp(c.Request.Context()).CreateInstanceOAM(req)
+	res, err := metadata.App.CreateInstanceOAM(c.Request.Context(), req)
 	if err != nil {
 		common.Fail(c, err)
 		return

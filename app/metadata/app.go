@@ -7,27 +7,21 @@ import (
 	"github.com/richer421/q-metahub/infra/mysql/dao"
 )
 
-type App struct {
-	ctx context.Context
-}
+type app struct{}
 
-func NewApp(ctx context.Context) *App {
-	return &App{
-		ctx: ctx,
-	}
-}
+var App = new(app)
 
-func (s *App) GetDeployPlan(deployPlanID int64) (*vo.DeployPlanAggregateVO, error) {
-	aggregate, err := loadDeployPlanAggregate(s.ctx, deployPlanID)
+func (s *app) GetDeployPlan(ctx context.Context, deployPlanID int64) (*vo.DeployPlanAggregateVO, error) {
+	aggregate, err := loadDeployPlanAggregate(ctx, deployPlanID)
 	if err != nil {
 		return nil, err
 	}
 	return aggregate.toVO(), nil
 }
 
-func (s *App) CreateInstanceOAM(createReq vo.CreateInstanceOAMReq) (vo.InstanceOAMVO, error) {
+func (s *app) CreateInstanceOAM(ctx context.Context, createReq vo.CreateInstanceOAMReq) (vo.InstanceOAMVO, error) {
 	oam := convert2OAM(createReq)
-	q := dao.Q.WithContext(s.ctx)
+	q := dao.Q.WithContext(ctx)
 	err := q.InstanceOAM.Create(&oam)
 	if err != nil {
 		return vo.InstanceOAMVO{}, err

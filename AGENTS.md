@@ -7,15 +7,16 @@
 - 使用函数式 handler，不使用 `MetadataAPI` 这类包裹结构体。
 - handler 保持固定流程：
   1. `ShouldBindJSON` / 参数解析
-  2. 调用 `metadata.NewApp(ctx)` 对应方法
+  2. 调用 `metadata.App` 对应方法
   3. `common.Fail` / `common.OK` 返回
 - API 只做入参解析与响应封装，不承载业务拼装逻辑。
 
 ## 2. App 层风格
 
-- 使用轻量 `App`：`NewApp(ctx)` 创建，方法直接面向业务动作。
+- 使用轻量 `App`：`var App = new(app)`，方法显式接收 `context.Context`。
 - 不为“可测性”引入厚接口或复杂依赖注入容器。
 - 业务逻辑按领域拆文件（例如 `deployPlan.go`、`oam.go`），避免一个超大 assembler 文件。
+- 转换逻辑要分层拆开，避免把整条映射链揉进一个大函数里。
 
 ## 3. 路由语义风格
 
@@ -39,6 +40,7 @@
 - 可选结构使用指针（例如 `Extended *InstanceExtendedVO`）。
 - OAM 与 VO 之间转换使用显式字段映射，避免隐式反射/魔法映射。
 - 默认值在转换函数中就地处理，常量集中定义（`default*`）。
+- 前端 payload 只作为接口视图模型；数据库持久化事实以 OAM 为准。
 
 ## 6. MCP 风格
 

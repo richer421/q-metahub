@@ -14,8 +14,8 @@
 
 ### Project（项目）
 
-- **表名**: projects
-- **说明**: 代码仓库
+- **表名**: `projects`
+- **说明**: 代码仓库元信息
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -26,7 +26,7 @@
 
 ### BusinessUnit（业务单元）
 
-- **表名**: business_units
+- **表名**: `business_units`
 - **说明**: 面向业务的独立交付单元
 
 | 字段 | 类型 | 约束 | 说明 |
@@ -36,83 +36,56 @@
 | Description | varchar(255) | - | 描述 |
 | ProjectID | int64 | NOT NULL, INDEX | 关联项目 |
 
-### CIConfig（CI配置）
+### CIConfig（CI 配置）
 
-- **表名**: ci_configs
-- **说明**: 代码构建配置，一体化打包构建流程
+- **表名**: `ci_configs`
+- **说明**: 构建配置（代码拉取 + 构建 + 镜像产物规则）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
 | Name | varchar(64) | NOT NULL | 配置名称 |
 | BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
-| ImageRegistry | varchar(255) | NOT NULL | 镜像仓库地址（如 registry.example.com） |
-| ImageRepo | varchar(255) | NOT NULL | 镜像仓库路径（如 library/myapp） |
+| ImageRegistry | varchar(255) | NOT NULL | 镜像仓库地址 |
+| ImageRepo | varchar(255) | NOT NULL | 镜像仓库路径 |
 | ImageTagRule | json | NOT NULL | 镜像标签规则 |
 | BuildSpec | json | NOT NULL | 构建配置详情 |
 
-**ImageTagRule 结构**（JSON 字段）：
+### CDConfig（CD 配置）
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| Type | string | 标签类型：branch/tag/commit/timestamp/custom |
-| Template | string | 自定义模板（当 type=custom 时使用） |
-| WithTimestamp | bool | 是否添加时间戳后缀 |
-| WithCommit | bool | 是否添加 commit 短 hash 后缀 |
-
-**BuildSpec 结构**（JSON 字段）：
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| Branch | *string | 构建分支（三选一） |
-| Tag | *string | 构建标签（三选一） |
-| CommitID | *string | 构建 Commit ID（三选一） |
-| MakefilePath | string | Makefile路径，默认 ./Makefile |
-| MakeCommand | string | 编译命令，默认 build |
-| DockerfilePath | string | Dockerfile路径，默认 ./Dockerfile |
-| DockerContext | string | Docker 构建上下文路径，默认 . |
-| BuildArgs | map | Docker 构建参数 |
-
-### CDConfig（CD配置）
-
-- **表名**: cd_configs
-- **说明**: 部署配置，定义发布策略
+- **表名**: `cd_configs`
+- **说明**: 发布配置（渲染引擎 + 发布策略 + GitOps）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
 | Name | varchar(64) | NOT NULL | 配置名称 |
+| BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
 | RenderEngine | varchar(32) | NOT NULL | 渲染引擎：helm/kustomize/custom |
-| ValuesYAML | text | - | Helm values 配置 |
+| ValuesYAML | text | - | 渲染参数 |
 | ReleaseStrategy | json | NOT NULL | 发布策略 |
-
-**ReleaseStrategy 结构**（JSON 字段）：
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| DeploymentMode | string | 发布模式：rolling/blue_green/canary |
-| BatchRule | BatchRule | 分批规则 |
-| CanaryTrafficRule | *CanaryTrafficRule | 金丝雀流量规则（仅 canary 模式） |
+| GitOps | json | - | GitOps 配置 |
 
 ### InstanceOAM（实例配置）
 
-- **表名**: instance_oams
-- **说明**: 运行态配置，存储 OAM-Lite 应用模型与前端编辑态
+- **表名**: `instance_oams`
+- **说明**: 运行态配置权威来源（OAM-Lite）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
-| Name | varchar(128) | NOT NULL, UNIQUE(与BusinessUnitID/Env组合) | 配置名称 |
+| Name | varchar(128) | NOT NULL, UNIQUE(与 BusinessUnitID/Env 组合) | 实例名称 |
 | BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
 | Env | varchar(32) | NOT NULL, INDEX | 环境：dev/test/gray/prod |
 | SchemaVersion | varchar(32) | NOT NULL, DEFAULT 'v1alpha1' | 模型版本 |
-| OAMApplication | json | NOT NULL | OAM-Lite 应用定义（component + traits） |
-| FrontendPayload | json | NOT NULL | 前端编辑态回显数据 |
+| OAMApplication | json | NOT NULL | OAM-Lite 应用定义 |
+
+说明：`frontend_payload` 不再持久化在 `instance_oams` 表中，仅作为 API 输入/输出桥接视图。
 
 ### DeployPlan（部署计划）
 
-- **表名**: deploy_plans
-- **说明**: 完整配置包，聚合 CI/CD/InstanceOAM 配置
+- **表名**: `deploy_plans`
+- **说明**: 发布配置聚合关系，连接 CI/CD/InstanceOAM
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -126,21 +99,30 @@
 
 ### Dependency（依赖）
 
-- **表名**: dependencies
-- **说明**: 中间件与基础能力（TODO: 暂不实现）
+- **表名**: `dependencies`
+- **说明**: 中间件与基础能力占位模型（字段待业务扩展）
+
+### DependencyBinding（依赖绑定）
+
+- **表名**: `dependency_bindings`
+- **说明**: 实例配置与依赖的绑定关系占位模型（字段待业务扩展）
 
 ## 实体关系
 
 ```
 Project 1:N BusinessUnit
+BusinessUnit 1:N CIConfig
+BusinessUnit 1:N CDConfig
+BusinessUnit 1:N InstanceOAM
 BusinessUnit 1:N DeployPlan
-BusinessUnit 1:1 CIConfig（默认CI配置）
 DeployPlan 1:1 CIConfig
 DeployPlan 1:1 CDConfig
 DeployPlan 1:1 InstanceOAM
 ```
 
 ## 数据流
+
 ```
-用户 → Project → BusinessUnit → CIConfig → BuildArtifact(q-ci) → Release(q-deploy)
+UI FrontendPayload -> q-metahub(metadata) -> InstanceOAM.OAMApplication
+q-deploy / MCP -> q-metahub(open-model) -> DeployPlanSpecVO
 ```

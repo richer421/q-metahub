@@ -11,11 +11,10 @@
 
 ## 架构
 
-采用 DDD 分层架构，严格单向依赖：`http → app → domain → infra`
+采用轻量分层架构，保持单向依赖：`http → app → infra`
 
 - **http 层**: 请求处理、参数校验、统一响应
 - **app 层**: 业务能力编排，VO 转换
-- **domain 层**: 核心业务逻辑抽象内聚
 - **infra 层**: 技术实现（MySQL/Redis/Kafka）
 - **knowledge 层**: 项目自我描述，纯 Markdown，不参与运行时
 
@@ -40,11 +39,8 @@
 │   └── middleware/             #   中间件（logger/recovery/otel）
 ├── app/                        # 应用层 — 用例编排
 │   └── <module>/
-│       ├── app.go              #   AppService（产品能力与业务能力的编排）
+│       ├── app.go              #   轻量 app 入口（暴露 package 级 App）
 │       └── vo/                 #   值对象（入参/出参 VO）
-├── domain/                     # 领域层 — 核心业务逻辑
-│   └── <module>/
-│       └── <module>.go         #   领域服务，直接调用 DAO
 ├── infra/                      # 基础设施层 — 技术实现
 │   ├── mysql/
 │   │   ├── mysql.go            #     DB 初始化 + OTel 插桩
@@ -108,8 +104,9 @@ make clean          # 清理 bin/ 目录
 
 - 严格单向依赖，禁止反向引用
 - 所有方法第一个参数为 `context.Context`
-- domain 层不感知 HTTP/配置，直接调用 DAO
-- app 层负责 VO ↔ Model 转换
+- handler 不向 app 透传 `*gin.Context`
+- app 层直接组织 DAO 调用与 VO ↔ Model 转换
+- 不为简单链路引入额外 service wrapper、接口分层或依赖注入容器
 
 ### 命名规范
 
@@ -121,24 +118,30 @@ make clean          # 清理 bin/ 目录
 
 1. `infra/mysql/model/` — 定义 GORM 模型（嵌入 `BaseModel`）
 2. `gen/gorm_gen/main.go` — 注册模型，`make sql` 生成 DAO
-3. `domain/<module>/` — 实现领域服务
-4. `app/<module>/` — 实现应用服务 + VO
-5. `http/api/` — 实现 API 处理器（Swagger 注解）
-6. `http/router/v1.go` — 注册路由
-7. `http/sdk/` — 实现客户端 SDK
-8. `knowledge/` — 更新能力清单和数据模型文档
-9. `make swagger` — 更新 API 文档
+3. `app/<module>/` — 实现 app 方法 + VO + 转换逻辑
+4. `http/api/` — 实现函数式 handler（Swagger 注解）
+5. `http/router/v1.go` — 注册路由
+6. `http/sdk/` — 实现客户端 SDK
+7. `knowledge/` — 更新能力清单和数据模型文档
+8. `make swagger` — 更新 API 文档
 
 ### API 处理器模式
 
 ```go
-type XxxAPI struct {
-    appSvc *app.AppService
+func CreateXxx(c *gin.Context) {
+    var req vo.CreateXxxReq
+    if err := c.ShouldBindJSON(&req); err != nil {
+        common.Fail(c, err)
+        return
+    }
+
+    res, err := xxx.App.Create(c.Request.Context(), req)
+    if err != nil {
+        common.Fail(c, err)
+        return
+    }
+    common.OK(c, res)
 }
-func NewXxxAPI() *XxxAPI {
-    return &XxxAPI{appSvc: app.NewAppService()}
-}
-// 处理器方法：ShouldBindQuery/JSON → appSvc 调用 → common.OK/Fail 响应
 ```
 
 ### 统一响应格式
@@ -148,11 +151,11 @@ func NewXxxAPI() *XxxAPI {
 {"code": -1, "message": "错误信息"}               // 失败
 ```
 
-### 测试范式
+### 代码风格补充
 
-- 对 app 层关键函数编写测试，SQL 和 HTTP 均使用 mock（`testutil.NewMockDB()` / `httptest.NewServer`）
-- 测试中对入参和结果进行标准化输出（`logInput` / `logOutput` / `logResult`），方便查看执行过程
-- 测试文件与源码同目录，`*_test.go` 命名
+- 优先直接、清晰的实现，避免为了“方便测试”额外引入厚抽象
+- 数据转换使用强类型视图模型，不使用 `map[string]any` 承载核心业务语义
+- 前端视图模型与后端持久化模型在接口边界桥接；后端内部统一传递 OAM/开放模型
 
 ### 基础设施生命周期
 

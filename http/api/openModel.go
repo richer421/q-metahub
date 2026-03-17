@@ -16,7 +16,7 @@ func GetOpenModelDeployPlan(c *gin.Context) {
 		return
 	}
 
-	res, err := metadata.NewApp(c.Request.Context()).GetDeployPlan(id)
+	res, err := metadata.App.GetDeployPlan(c.Request.Context(), id)
 	if err != nil {
 		common.Fail(c, err)
 		return
