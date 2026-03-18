@@ -44,12 +44,18 @@
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
-| Name | varchar(64) | NOT NULL | 配置名称 |
-| BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
+| Name | varchar(64) | NOT NULL, UNIQUE(与 BusinessUnitID 组合) | 配置名称 |
+| BusinessUnitID | int64 | NOT NULL, INDEX, UNIQUE(与 Name 组合) | 关联业务单元 |
 | ImageRegistry | varchar(255) | NOT NULL | 镜像仓库地址 |
-| ImageRepo | varchar(255) | NOT NULL | 镜像仓库路径 |
+| ImageRepo | varchar(255) | NOT NULL | 镜像仓库路径，按 BusinessUnit 名称派生，不在创建/编辑表单中单独配置 |
 | ImageTagRule | json | NOT NULL | 镜像标签规则 |
-| BuildSpec | json | NOT NULL | 构建配置详情 |
+| BuildSpec | json | NOT NULL | 构建配置详情，默认回填 `./Makefile` 与 `./Dockerfile` |
+
+补充约束：
+
+- 同一业务单元下，CI 配置名称唯一。
+- 删除 CI 配置前需检查 DeployPlan 引用；存在引用时禁止删除并返回原因。
+- `BuildSpec.Branch/Tag/CommitID` 保留为运行态上下文，不作为当前业务详情页 CI 配置表单的静态输入来源。
 
 ### CDConfig（CD 配置）
 

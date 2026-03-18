@@ -57,6 +57,17 @@ func TestGetCIConfigRejectsInvalidID(t *testing.T) {
 	assertErrorMessage(t, w, "invalid ci config id")
 }
 
+func TestDeleteCIConfigRejectsInvalidID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "bad-id"}}
+	c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/ci-configs/bad-id", nil)
+
+	DeleteCIConfig(c)
+
+	assertErrorMessage(t, w, "invalid ci config id")
+}
+
 func assertErrorMessage(t *testing.T, w *httptest.ResponseRecorder, expected string) {
 	t.Helper()
 

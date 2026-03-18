@@ -154,6 +154,65 @@ func GetCIConfig(c *gin.Context) {
 	common.OK(c, res)
 }
 
+func CreateBusinessUnitCIConfig(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	var req vo.CreateCIConfigReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	res, err := metadata.App.CreateBusinessUnitCIConfig(c.Request.Context(), businessUnitID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func UpdateCIConfig(c *gin.Context) {
+	ciConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid ci config id"))
+		return
+	}
+
+	var req vo.UpdateCIConfigReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	res, err := metadata.App.UpdateCIConfig(c.Request.Context(), ciConfigID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func DeleteCIConfig(c *gin.Context) {
+	ciConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid ci config id"))
+		return
+	}
+
+	if err := metadata.App.DeleteCIConfig(c.Request.Context(), ciConfigID); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, gin.H{})
+}
+
 func UpdateInstanceOAM(c *gin.Context) {
 	instanceOAMID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

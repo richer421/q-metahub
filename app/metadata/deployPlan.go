@@ -181,13 +181,6 @@ func toDeployPlanVO(in *model.DeployPlan) vo.DeployPlanVO {
 	}
 }
 
-func derefString(v *string) string {
-	if v == nil {
-		return ""
-	}
-	return *v
-}
-
 func defaultString(value string, fallback string) string {
 	if value == "" {
 		return fallback
