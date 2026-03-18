@@ -60,17 +60,27 @@
 ### CDConfig（CD 配置）
 
 - **表名**: `cd_configs`
-- **说明**: 发布配置（渲染引擎 + 发布策略 + GitOps）
+- **说明**: 发布配置，前端仅编辑业务字段，后端补齐渲染与 GitOps 默认规则
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | (BaseModel) | - | - | 嵌入通用基础字段 |
 | Name | varchar(64) | NOT NULL | 配置名称 |
 | BusinessUnitID | int64 | NOT NULL, INDEX | 关联业务单元 |
+| ReleaseRegion | varchar(32) | NOT NULL, DEFAULT `cn-east` | 发布区域，内部存编码（如 `cn-east`） |
+| ReleaseEnv | varchar(32) | NOT NULL, DEFAULT `dev` | 发布环境，内部存编码（如 `dev`） |
 | RenderEngine | varchar(32) | NOT NULL | 渲染引擎：helm/kustomize/custom |
 | ValuesYAML | text | - | 渲染参数 |
 | ReleaseStrategy | json | NOT NULL | 发布策略 |
 | GitOps | json | - | GitOps 配置 |
+
+说明：
+
+- 前端展示字段使用中文标签：发布区域（华东/华北/新加坡）、发布环境（开发/测试/灰度/生产）、发布策略（滚动发布/金丝雀发布）。
+- `RenderEngine`、`ValuesYAML`、`GitOps` 不对前端透出编辑能力，创建/更新时由后端按内置规则回填。
+- `ReleaseStrategy` 当前支持：
+  - 滚动发布：后端使用默认批次规则。
+  - 金丝雀发布：额外持久化批次流量、是否允许手动调整、手动调整超时等参数。
 
 ### InstanceOAM（实例配置）
 

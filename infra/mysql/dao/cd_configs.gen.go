@@ -32,6 +32,8 @@ func newCDConfig(db *gorm.DB, opts ...gen.DOOption) cDConfig {
 	_cDConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_cDConfig.Name = field.NewString(tableName, "name")
 	_cDConfig.BusinessUnitID = field.NewInt64(tableName, "business_unit_id")
+	_cDConfig.ReleaseRegion = field.NewString(tableName, "release_region")
+	_cDConfig.ReleaseEnv = field.NewString(tableName, "release_env")
 	_cDConfig.RenderEngine = field.NewString(tableName, "render_engine")
 	_cDConfig.ValuesYAML = field.NewString(tableName, "values_yaml")
 	_cDConfig.ReleaseStrategy = field.NewField(tableName, "release_strategy")
@@ -51,6 +53,8 @@ type cDConfig struct {
 	UpdatedAt       field.Time
 	Name            field.String
 	BusinessUnitID  field.Int64
+	ReleaseRegion   field.String
+	ReleaseEnv      field.String
 	RenderEngine    field.String
 	ValuesYAML      field.String
 	ReleaseStrategy field.Field
@@ -76,6 +80,8 @@ func (c *cDConfig) updateTableName(table string) *cDConfig {
 	c.UpdatedAt = field.NewTime(table, "updated_at")
 	c.Name = field.NewString(table, "name")
 	c.BusinessUnitID = field.NewInt64(table, "business_unit_id")
+	c.ReleaseRegion = field.NewString(table, "release_region")
+	c.ReleaseEnv = field.NewString(table, "release_env")
 	c.RenderEngine = field.NewString(table, "render_engine")
 	c.ValuesYAML = field.NewString(table, "values_yaml")
 	c.ReleaseStrategy = field.NewField(table, "release_strategy")
@@ -104,12 +110,14 @@ func (c *cDConfig) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (c *cDConfig) fillFieldMap() {
-	c.fieldMap = make(map[string]field.Expr, 9)
+	c.fieldMap = make(map[string]field.Expr, 11)
 	c.fieldMap["id"] = c.ID
 	c.fieldMap["created_at"] = c.CreatedAt
 	c.fieldMap["updated_at"] = c.UpdatedAt
 	c.fieldMap["name"] = c.Name
 	c.fieldMap["business_unit_id"] = c.BusinessUnitID
+	c.fieldMap["release_region"] = c.ReleaseRegion
+	c.fieldMap["release_env"] = c.ReleaseEnv
 	c.fieldMap["render_engine"] = c.RenderEngine
 	c.fieldMap["values_yaml"] = c.ValuesYAML
 	c.fieldMap["release_strategy"] = c.ReleaseStrategy

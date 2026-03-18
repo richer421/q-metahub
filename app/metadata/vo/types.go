@@ -142,6 +142,49 @@ type CDConfigVO struct {
 	GitOps          map[string]any `json:"git_ops,omitempty"`
 }
 
+type CDConfigListReq struct {
+	Page           int    `form:"page"`
+	PageSize       int    `form:"page_size"`
+	Keyword        string `form:"keyword"`
+	ReleaseRegion  string `form:"release_region"`
+	ReleaseEnv     string `form:"release_env"`
+	DeploymentMode string `form:"deployment_mode"`
+}
+
+type UpsertCDConfigReq struct {
+	Name                 string    `json:"name"`
+	ReleaseRegion        string    `json:"release_region"`
+	ReleaseEnv           string    `json:"release_env"`
+	DeploymentMode       string    `json:"deployment_mode"`
+	TrafficBatchCount    *int      `json:"traffic_batch_count,omitempty"`
+	TrafficRatioList     []float64 `json:"traffic_ratio_list,omitempty"`
+	ManualAdjust         *bool     `json:"manual_adjust,omitempty"`
+	AdjustTimeoutSeconds *int      `json:"adjust_timeout_seconds,omitempty"`
+}
+
+type CDConfigFrontendVO struct {
+	ID                   int64     `json:"id"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	Name                 string    `json:"name"`
+	BusinessUnitID       int64     `json:"business_unit_id"`
+	ReleaseRegion        string    `json:"release_region"`
+	ReleaseEnv           string    `json:"release_env"`
+	DeploymentMode       string    `json:"deployment_mode"`
+	StrategySummary      string    `json:"strategy_summary"`
+	TrafficBatchCount    *int      `json:"traffic_batch_count,omitempty"`
+	TrafficRatioList     []float64 `json:"traffic_ratio_list,omitempty"`
+	ManualAdjust         *bool     `json:"manual_adjust,omitempty"`
+	AdjustTimeoutSeconds *int      `json:"adjust_timeout_seconds,omitempty"`
+}
+
+type CDConfigPageDTO struct {
+	Items    []CDConfigFrontendVO `json:"items"`
+	Total    int64                `json:"total"`
+	Page     int                  `json:"page"`
+	PageSize int                  `json:"page_size"`
+}
+
 type InstanceOAMVO struct {
 	ID              int64                     `json:"id"`
 	CreatedAt       time.Time                 `json:"created_at"`
