@@ -60,15 +60,56 @@ type BusinessUnitVO struct {
 }
 
 type CIConfigVO struct {
-	ID             int64          `json:"id"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	Name           string         `json:"name"`
-	BusinessUnitID int64          `json:"business_unit_id"`
-	ImageRegistry  string         `json:"image_registry"`
-	ImageRepo      string         `json:"image_repo"`
-	ImageTagRule   map[string]any `json:"image_tag_rule"`
-	BuildSpec      map[string]any `json:"build_spec"`
+	ID                 int64                `json:"id"`
+	CreatedAt          time.Time            `json:"created_at"`
+	UpdatedAt          time.Time            `json:"updated_at"`
+	Name               string               `json:"name"`
+	BusinessUnitID     int64                `json:"business_unit_id"`
+	ImageRegistry      string               `json:"image_registry"`
+	ImageRepo          string               `json:"image_repo"`
+	FullImageRepo      string               `json:"full_image_repo"`
+	ImageTagRule       CIConfigImageTagRuleVO `json:"image_tag_rule"`
+	BuildSpec          CIConfigBuildSpecVO    `json:"build_spec"`
+	DeployPlanRefCount int64                `json:"deploy_plan_ref_count,omitempty"`
+}
+
+type CIConfigImageTagRuleVO struct {
+	Type          string `json:"type"`
+	Template      string `json:"template,omitempty"`
+	WithTimestamp bool   `json:"with_timestamp,omitempty"`
+	WithCommit    bool   `json:"with_commit,omitempty"`
+}
+
+type CIConfigBuildSpecVO struct {
+	Branch         *string           `json:"branch,omitempty"`
+	Tag            *string           `json:"tag,omitempty"`
+	CommitID       *string           `json:"commit_id,omitempty"`
+	MakefilePath   string            `json:"makefile_path,omitempty"`
+	MakeCommand    string            `json:"make_command,omitempty"`
+	DockerfilePath string            `json:"dockerfile_path,omitempty"`
+	DockerContext  string            `json:"docker_context,omitempty"`
+	BuildArgs      map[string]string `json:"build_args,omitempty"`
+}
+
+type CIConfigPageVO struct {
+	Items    []CIConfigVO `json:"items"`
+	Total    int64        `json:"total"`
+	Page     int          `json:"page"`
+	PageSize int          `json:"page_size"`
+}
+
+type CreateCIConfigReq struct {
+	Name          string               `json:"name"`
+	ImageRegistry string               `json:"image_registry"`
+	ImageTagRule  CIConfigImageTagRuleVO `json:"image_tag_rule"`
+	BuildSpec     CIConfigBuildSpecVO    `json:"build_spec"`
+}
+
+type UpdateCIConfigReq struct {
+	Name          *string                `json:"name,omitempty"`
+	ImageRegistry *string                `json:"image_registry,omitempty"`
+	ImageTagRule  *CIConfigImageTagRuleVO `json:"image_tag_rule,omitempty"`
+	BuildSpec     *CIConfigBuildSpecVO    `json:"build_spec,omitempty"`
 }
 
 type CDConfigVO struct {
