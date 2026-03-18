@@ -139,3 +139,100 @@ func DeleteInstanceOAM(c *gin.Context) {
 
 	common.OK(c, gin.H{})
 }
+
+func ListBusinessUnitCDConfigs(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	var req vo.CDConfigListReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	res, err := metadata.App.ListBusinessUnitCDConfigs(c.Request.Context(), businessUnitID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func GetCDConfig(c *gin.Context) {
+	cdConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid cd config id"))
+		return
+	}
+
+	res, err := metadata.App.GetCDConfig(c.Request.Context(), cdConfigID)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func CreateBusinessUnitCDConfig(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	var req vo.UpsertCDConfigReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	res, err := metadata.App.CreateBusinessUnitCDConfig(c.Request.Context(), businessUnitID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func UpdateCDConfig(c *gin.Context) {
+	cdConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid cd config id"))
+		return
+	}
+
+	var req vo.UpsertCDConfigReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	res, err := metadata.App.UpdateCDConfig(c.Request.Context(), cdConfigID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func DeleteCDConfig(c *gin.Context) {
+	cdConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid cd config id"))
+		return
+	}
+
+	if err := metadata.App.DeleteCDConfig(c.Request.Context(), cdConfigID); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, gin.H{})
+}
