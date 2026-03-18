@@ -26,6 +26,97 @@ func CreateInstanceOAM(c *gin.Context) {
 	common.OK(c, res)
 }
 
+func ListBusinessUnits(c *gin.Context) {
+	page := 1
+	if rawPage := strings.TrimSpace(c.DefaultQuery("page", "1")); rawPage != "" {
+		parsed, err := strconv.Atoi(rawPage)
+		if err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	pageSize := 10
+	if rawPageSize := strings.TrimSpace(c.DefaultQuery("page_size", "10")); rawPageSize != "" {
+		parsed, err := strconv.Atoi(rawPageSize)
+		if err == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+
+	res, err := metadata.App.ListBusinessUnits(c.Request.Context(), page, pageSize, strings.TrimSpace(c.Query("keyword")))
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func CreateBusinessUnit(c *gin.Context) {
+	var req vo.CreateBusinessUnitReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		common.Fail(c, fmt.Errorf("name is required"))
+		return
+	}
+	if req.ProjectID <= 0 {
+		common.Fail(c, fmt.Errorf("project_id is required"))
+		return
+	}
+
+	res, err := metadata.App.CreateBusinessUnit(c.Request.Context(), req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func UpdateBusinessUnit(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	var req vo.UpdateBusinessUnitReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, err)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		common.Fail(c, fmt.Errorf("name is required"))
+		return
+	}
+
+	res, err := metadata.App.UpdateBusinessUnit(c.Request.Context(), businessUnitID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func DeleteBusinessUnit(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	if err := metadata.App.DeleteBusinessUnit(c.Request.Context(), businessUnitID); err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, gin.H{})
+}
+
 func ListInstanceOAMTemplates(c *gin.Context) {
 	common.OK(c, metadata.App.ListInstanceOAMTemplates(c.Request.Context()))
 }

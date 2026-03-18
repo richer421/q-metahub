@@ -50,6 +50,17 @@ type ProjectVO struct {
 	RepoURL   string    `json:"repo_url"`
 }
 
+type CreateBusinessUnitReq struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ProjectID   int64  `json:"project_id"`
+}
+
+type UpdateBusinessUnitReq struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type BusinessUnitVO struct {
 	ID          int64     `json:"id"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -57,6 +68,13 @@ type BusinessUnitVO struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	ProjectID   int64     `json:"project_id"`
+}
+
+type BusinessUnitPageDTO struct {
+	Items    []BusinessUnitVO `json:"items"`
+	Total    int64            `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
 }
 
 type CIConfigVO struct {

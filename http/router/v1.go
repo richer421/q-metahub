@@ -16,6 +16,10 @@ func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	legacyGroup := v1.Group("/metadata")
 	legacyGroup.POST("/instance-oams", api.CreateInstanceOAM)
 
+	v1.GET("/business-units", api.ListBusinessUnits)
+	v1.POST("/business-units", api.CreateBusinessUnit)
+	v1.PUT("/business-units/:id", api.UpdateBusinessUnit)
+	v1.DELETE("/business-units/:id", api.DeleteBusinessUnit)
 	v1.GET("/instance-oam-templates", api.ListInstanceOAMTemplates)
 	v1.GET("/business-units/:id/instance-oams", api.ListBusinessUnitInstanceOAMs)
 	v1.POST("/business-units/:id/instance-oams", api.CreateBusinessUnitInstanceOAM)
