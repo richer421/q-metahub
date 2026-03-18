@@ -115,19 +115,24 @@ func toCIConfigVO(in *model.CIConfig) vo.CIConfigVO {
 		BusinessUnitID: in.BusinessUnitID,
 		ImageRegistry:  in.ImageRegistry,
 		ImageRepo:      in.ImageRepo,
-		ImageTagRule: map[string]any{
-			"type": in.ImageTagRule.Type,
+		FullImageRepo:  in.ImageRegistry + "/" + in.ImageRepo,
+		ImageTagRule: vo.CIConfigImageTagRuleVO{
+			Type:          in.ImageTagRule.Type,
+			Template:      in.ImageTagRule.Template,
+			WithTimestamp: in.ImageTagRule.WithTimestamp,
+			WithCommit:    in.ImageTagRule.WithCommit,
 		},
-		BuildSpec: map[string]any{
-			"branch":          derefString(in.BuildSpec.Branch),
-			"tag":             derefString(in.BuildSpec.Tag),
-			"commit_id":       derefString(in.BuildSpec.CommitID),
-			"makefile_path":   in.BuildSpec.MakefilePath,
-			"make_command":    in.BuildSpec.MakeCommand,
-			"dockerfile_path": in.BuildSpec.DockerfilePath,
-			"docker_context":  in.BuildSpec.DockerContext,
-			"build_args":      in.BuildSpec.BuildArgs,
+		BuildSpec: vo.CIConfigBuildSpecVO{
+			Branch:         in.BuildSpec.Branch,
+			Tag:            in.BuildSpec.Tag,
+			CommitID:       in.BuildSpec.CommitID,
+			MakefilePath:   defaultString(in.BuildSpec.MakefilePath, "./Makefile"),
+			MakeCommand:    in.BuildSpec.MakeCommand,
+			DockerfilePath: defaultString(in.BuildSpec.DockerfilePath, "./Dockerfile"),
+			DockerContext:  in.BuildSpec.DockerContext,
+			BuildArgs:      in.BuildSpec.BuildArgs,
 		},
+		DeployPlanRefCount: 0,
 	}
 }
 
@@ -181,4 +186,11 @@ func derefString(v *string) string {
 		return ""
 	}
 	return *v
+}
+
+func defaultString(value string, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }
