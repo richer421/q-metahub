@@ -30,6 +30,46 @@ func ListInstanceOAMTemplates(c *gin.Context) {
 	common.OK(c, metadata.App.ListInstanceOAMTemplates(c.Request.Context()))
 }
 
+func ListBusinessUnitCIConfigs(c *gin.Context) {
+	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid business unit id"))
+		return
+	}
+
+	page := 1
+	if rawPage := strings.TrimSpace(c.DefaultQuery("page", "1")); rawPage != "" {
+		page, err = strconv.Atoi(rawPage)
+		if err != nil {
+			common.Fail(c, fmt.Errorf("invalid page"))
+			return
+		}
+	}
+
+	pageSize := 10
+	if rawPageSize := strings.TrimSpace(c.DefaultQuery("page_size", "10")); rawPageSize != "" {
+		pageSize, err = strconv.Atoi(rawPageSize)
+		if err != nil {
+			common.Fail(c, fmt.Errorf("invalid page_size"))
+			return
+		}
+	}
+
+	res, err := metadata.App.ListBusinessUnitCIConfigs(
+		c.Request.Context(),
+		businessUnitID,
+		page,
+		pageSize,
+		strings.TrimSpace(c.Query("keyword")),
+	)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
 func ListBusinessUnitInstanceOAMs(c *gin.Context) {
 	businessUnitID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -90,6 +130,22 @@ func CreateBusinessUnitInstanceOAM(c *gin.Context) {
 	}
 
 	res, err := metadata.App.CreateBusinessUnitInstanceOAM(c.Request.Context(), businessUnitID, req)
+	if err != nil {
+		common.Fail(c, err)
+		return
+	}
+
+	common.OK(c, res)
+}
+
+func GetCIConfig(c *gin.Context) {
+	ciConfigID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		common.Fail(c, fmt.Errorf("invalid ci config id"))
+		return
+	}
+
+	res, err := metadata.App.GetCIConfig(c.Request.Context(), ciConfigID)
 	if err != nil {
 		common.Fail(c, err)
 		return
