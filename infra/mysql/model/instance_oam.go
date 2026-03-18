@@ -10,12 +10,11 @@ import (
 // 该模型用于存储前端可视化编辑后的 OAM 数据。
 type InstanceOAM struct {
 	BaseModel
-	Name            string             `gorm:"column:name;type:varchar(128);not null;uniqueIndex:uk_instance_oam_identity" json:"name"`
-	BusinessUnitID  int64              `gorm:"column:business_unit_id;not null;index;uniqueIndex:uk_instance_oam_identity" json:"business_unit_id"`
-	Env             string             `gorm:"column:env;type:varchar(32);not null;index;uniqueIndex:uk_instance_oam_identity" json:"env"` // dev/test/gray/prod
-	SchemaVersion   string             `gorm:"column:schema_version;type:varchar(32);not null;default:v1alpha1" json:"schema_version"`
-	OAMApplication  OAMApplication     `gorm:"column:oam_application;type:json;not null" json:"oam_application"` // OAM-Lite: 单组件+分类traits
-	FrontendPayload InstanceOAMPayload `gorm:"column:frontend_payload;type:json;not null" json:"frontend_payload"`
+	Name           string         `gorm:"column:name;type:varchar(128);not null;uniqueIndex:uk_instance_oam_identity" json:"name"`
+	BusinessUnitID int64          `gorm:"column:business_unit_id;not null;index;uniqueIndex:uk_instance_oam_identity" json:"business_unit_id"`
+	Env            string         `gorm:"column:env;type:varchar(32);not null;index;uniqueIndex:uk_instance_oam_identity" json:"env"` // dev/test/gray/prod
+	SchemaVersion  string         `gorm:"column:schema_version;type:varchar(32);not null;default:v1alpha1" json:"schema_version"`
+	OAMApplication OAMApplication `gorm:"column:oam_application;type:json;not null" json:"oam_application"` // OAM-Lite: 单组件+分类traits
 }
 
 func (InstanceOAM) TableName() string {
@@ -92,11 +91,16 @@ type OAMEnvVar struct {
 // OAMTraits 以能力域分类，贴合前端“网络/存储/配置”等分层设计。
 type OAMTraits struct {
 	Network        *NetworkTrait    `json:"network,omitempty"`        // 网络特性（k8s service/apisix 等）
+	Scaling        *ScalingTrait    `json:"scaling,omitempty"`        // 弹性伸缩（副本数）
 	Storage        *StorageTrait    `json:"storage,omitempty"`        // 存储特性（volume/mount）
 	Config         *ConfigTrait     `json:"config,omitempty"`         // 配置特性（env/configmap/secret）
 	Sidecars       []ContainerTrait `json:"sidecars,omitempty"`       // 副容器
 	InitContainers []ContainerTrait `json:"initContainers,omitempty"` // init 容器
 	Extensions     map[string]any   `json:"extensions,omitempty"`     // 扩展特性，预留
+}
+
+type ScalingTrait struct {
+	Replicas int32 `json:"replicas"`
 }
 
 type StorageTrait struct{}
@@ -118,12 +122,6 @@ type ApiSixTrait struct {
 }
 
 // InstanceOAMPayload 存储前端编辑态结构（基础/扩展/高级），用于无损回显。
-type InstanceOAMPayload struct {
-	Basic    map[string]any `json:"basic,omitempty"`
-	Extended map[string]any `json:"extended,omitempty"`
-	Advanced map[string]any `json:"advanced,omitempty"`
-}
-
 func (o OAMApplication) Value() (driver.Value, error) {
 	return json.Marshal(o)
 }
@@ -137,19 +135,4 @@ func (o *OAMApplication) Scan(value interface{}) error {
 		return fmt.Errorf("failed to scan OAMApplication: expected []byte, got %T", value)
 	}
 	return json.Unmarshal(bytes, o)
-}
-
-func (p InstanceOAMPayload) Value() (driver.Value, error) {
-	return json.Marshal(p)
-}
-
-func (p *InstanceOAMPayload) Scan(value interface{}) error {
-	if value == nil {
-		return nil
-	}
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan InstanceOAMPayload: expected []byte, got %T", value)
-	}
-	return json.Unmarshal(bytes, p)
 }

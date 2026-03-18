@@ -4,43 +4,31 @@
 
 ## 设计原则
 
-- 只描述"做什么"，不描述"怎么做"
-- 接口细节由 Swagger 文档维护，此处不重复
-- 新增模块时，说明业务场景而非 API 列表
+- 写模型与读模型分离：metadata 写入、open-model 对外读取
+- OAM 作为后端事实来源：前端 payload 只用于桥接转换
+- 接口语义按路由分组：`/v1/metadata/*` 与 `/v1/open-model/*`
 
 ## 能力清单
 
-### Hello World（示例模块）
+### 元数据写入（Metadata）
 
-示例业务场景，用于演示完整的 CRUD 流程和分层架构。
+提供实例 OAM 的写入入口：
 
-- 创建、查询、更新、删除记录
-- 分页列表查询
+- `POST /v1/metadata/instance-oams`
+- 入参：`CreateInstanceOAMReq`（包含前端视图模型）
+- 行为：将前端视图模型转换为 OAM-Lite 后写入 `instance_oams`
 
-### MCP Server
+### 对外读模型（Open Model）
 
-独立 MCP Server，供 Claude 调用：
+提供部署计划聚合读模型：
 
-- `q-metahub mcp` — 启动 MCP Server（stdio 模式）
-- 工具：
-  - `call_api` — 调用 API（action: hello_world.list/get/create/update/delete）
-  - `read_logs` — 读取日志文件
+- `GET /v1/open-model/deploy-plans/:id`
+- 输出：`DeployPlanSpecVO`（稳定字段，面向下游系统）
+- 数据来源：DeployPlan 聚合关联的 CI/CD/InstanceOAM
 
-<!-- 新增模块在此添加，格式示例：
+### MCP 能力
 
-### 订单管理
+通过 `q-metahub mcp` 启动 MCP Server（stdio 模式），工具包括：
 
-处理订单相关的核心业务场景。
-
-- 下单：创建订单并关联商品
-- 支付：处理订单支付状态变更
-- 取消：订单取消与退款处理
-
-### 用户管理
-
-用户身份与权限相关业务。
-
-- 注册：新用户入驻
-- 登录：身份验证与令牌签发
-- 信息管理：用户资料维护
--->
+- `read_logs`：读取日志文件
+- `get_open_model_deploy_plan`：按 `deploy_plan_id` 返回 open-model 部署计划

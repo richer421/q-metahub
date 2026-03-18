@@ -72,6 +72,13 @@ func Init() error {
 		}
 	}
 
+	// instance_oams 仅持久化 oam_application，清理已废弃的 frontend_payload 列。
+	if db.Migrator().HasTable("instance_oams") && db.Migrator().HasColumn("instance_oams", "frontend_payload") {
+		if err := db.Migrator().DropColumn("instance_oams", "frontend_payload"); err != nil {
+			return fmt.Errorf("drop deprecated column instance_oams.frontend_payload failed: %w", err)
+		}
+	}
+
 	// 设置 DAO 使用的 DB
 	dao.SetDefault(db)
 
