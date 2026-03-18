@@ -22,6 +22,7 @@ RUN apk add --no-cache ca-certificates tzdata librdkafka
 WORKDIR /app
 COPY --from=builder /app/{{ .ProjectName }} .
 COPY conf/config.yaml ./conf/config.yaml
+COPY conf/admin_console_config.yaml ./conf/admin_console_config.yaml
 
 EXPOSE 8080
 

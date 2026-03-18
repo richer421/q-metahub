@@ -1,0 +1,17 @@
+instance_oam_templates:
+  - key: "low_load"
+    name: "低负载业务"
+    description: "适用于流量较小、资源占用稳定的业务实例"
+    replicas: 1
+    cpu_request: "250m"
+    cpu_limit: "500m"
+    memory_request: "256Mi"
+    memory_limit: "512Mi"
+  - key: "high_load"
+    name: "高负载业务"
+    description: "适用于流量较高、需要更高资源上限的业务实例"
+    replicas: 2
+    cpu_request: "1000m"
+    cpu_limit: "2000m"
+    memory_request: "1Gi"
+    memory_limit: "2Gi"

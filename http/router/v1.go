@@ -13,8 +13,14 @@ func RegisterV1(apiGroup *gin.RouterGroup) {
 }
 
 func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
-	apiGroup := v1.Group("/metadata")
-	apiGroup.POST("/instance-oams", api.CreateInstanceOAM)
+	legacyGroup := v1.Group("/metadata")
+	legacyGroup.POST("/instance-oams", api.CreateInstanceOAM)
+
+	v1.GET("/instance-oam-templates", api.ListInstanceOAMTemplates)
+	v1.GET("/business-units/:id/instance-oams", api.ListBusinessUnitInstanceOAMs)
+	v1.POST("/business-units/:id/instance-oams", api.CreateBusinessUnitInstanceOAM)
+	v1.PUT("/instance-oams/:id", api.UpdateInstanceOAM)
+	v1.DELETE("/instance-oams/:id", api.DeleteInstanceOAM)
 }
 
 func RegisterOpenModel(v1 *gin.RouterGroup) {

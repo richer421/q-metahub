@@ -13,6 +13,12 @@ type CreateInstanceOAMReq struct {
 	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
 }
 
+type CreateInstanceOAMFromTemplateReq struct {
+	Name        string `json:"name"`
+	Env         string `json:"env"`
+	TemplateKey string `json:"template_key"`
+}
+
 // InstanceFrontendPayloadVO is UI-facing form schema.
 type InstanceFrontendPayloadVO struct {
 	Basic    InstanceBasicVO     `json:"basic"`
@@ -87,6 +93,42 @@ type InstanceOAMVO struct {
 	SchemaVersion   string                    `json:"schema_version"`
 	OAMApplication  model.OAMApplication      `json:"oam_application"`
 	FrontendPayload InstanceFrontendPayloadVO `json:"frontend_payload"`
+}
+
+type InstanceOAMDTO struct {
+	ID              int64          `json:"id"`
+	BusinessUnitID  int64          `json:"business_unit_id"`
+	Name            string         `json:"name"`
+	Env             string         `json:"env"`
+	SchemaVersion   string         `json:"schema_version"`
+	OAMApplication  map[string]any `json:"oam_application"`
+	FrontendPayload map[string]any `json:"frontend_payload"`
+}
+
+type InstanceOAMPageDTO struct {
+	Items    []InstanceOAMDTO `json:"items"`
+	Total    int64            `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
+}
+
+type InstanceOAMTemplateDTO struct {
+	Key           string `json:"key"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Replicas      int32  `json:"replicas"`
+	CPURequest    string `json:"cpu_request"`
+	CPULimit      string `json:"cpu_limit"`
+	MemoryRequest string `json:"memory_request"`
+	MemoryLimit   string `json:"memory_limit"`
+}
+
+type UpdateInstanceOAMReq struct {
+	Name            string         `json:"name"`
+	Env             string         `json:"env"`
+	SchemaVersion   string         `json:"schema_version"`
+	OAMApplication  map[string]any `json:"oam_application"`
+	FrontendPayload map[string]any `json:"frontend_payload"`
 }
 
 type DeployPlanVO struct {

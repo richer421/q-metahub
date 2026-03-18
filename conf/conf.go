@@ -3,6 +3,7 @@ package conf
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -10,12 +11,13 @@ import (
 var C Config
 
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	MySQL  MySQLConfig  `yaml:"mysql"`
-	Redis  RedisConfig  `yaml:"redis"`
-	Kafka  KafkaConfig  `yaml:"kafka"`
-	Log    LogConfig    `yaml:"log"`
-	OTel   OTelConfig   `yaml:"otel"`
+	Server               ServerConfig                `yaml:"server"`
+	MySQL                MySQLConfig                 `yaml:"mysql"`
+	Redis                RedisConfig                 `yaml:"redis"`
+	Kafka                KafkaConfig                 `yaml:"kafka"`
+	Log                  LogConfig                   `yaml:"log"`
+	OTel                 OTelConfig                  `yaml:"otel"`
+	InstanceOAMTemplates []InstanceOAMTemplateConfig `yaml:"instance_oam_templates"`
 }
 
 type ServerConfig struct {
@@ -82,6 +84,21 @@ type PrometheusConfig struct {
 	Path    string `yaml:"path"`
 }
 
+type InstanceOAMTemplateConfig struct {
+	Key           string `yaml:"key"`
+	Name          string `yaml:"name"`
+	Description   string `yaml:"description"`
+	Replicas      int32  `yaml:"replicas"`
+	CPURequest    string `yaml:"cpu_request"`
+	CPULimit      string `yaml:"cpu_limit"`
+	MemoryRequest string `yaml:"memory_request"`
+	MemoryLimit   string `yaml:"memory_limit"`
+}
+
+type adminConsoleConfigFile struct {
+	InstanceOAMTemplates []InstanceOAMTemplateConfig `yaml:"instance_oam_templates"`
+}
+
 func Load(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -90,5 +107,18 @@ func Load(path string) error {
 	if err := yaml.Unmarshal(data, &C); err != nil {
 		return err
 	}
+
+	adminConsoleConfigPath := filepath.Join(filepath.Dir(path), "admin_console_config.yaml")
+	adminConsoleConfigData, err := os.ReadFile(adminConsoleConfigPath)
+	if err != nil {
+		return err
+	}
+
+	var adminConsoleConfig adminConsoleConfigFile
+	if err := yaml.Unmarshal(adminConsoleConfigData, &adminConsoleConfig); err != nil {
+		return err
+	}
+
+	C.InstanceOAMTemplates = adminConsoleConfig.InstanceOAMTemplates
 	return nil
 }
