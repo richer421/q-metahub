@@ -12,49 +12,31 @@ import (
 )
 
 const (
-	defaultCDRenderEngine = "helm"
-	defaultGitOpsBranch   = "main"
-	defaultGitOpsAppRoot  = "apps"
+	defaultCDRenderEngine     = "helm"
+	defaultGitOpsBranch       = "main"
+	defaultGitOpsAppRoot      = "apps"
 	defaultGitOpsManifestRoot = "manifests"
 )
 
-var releaseRegionLabelToCode = map[string]string{
-	"华东":   "cn-east",
-	"华北":   "cn-north",
-	"新加坡": "ap-singapore",
+var supportedReleaseRegions = map[string]struct{}{
+	"cn-east":      {},
+	"cn-north":     {},
+	"ap-singapore": {},
 }
 
-var releaseRegionCodeToLabel = map[string]string{
-	"cn-east":      "华东",
-	"cn-north":     "华北",
-	"ap-singapore": "新加坡",
+var supportedReleaseEnvs = map[string]struct{}{
+	"dev":  {},
+	"test": {},
+	"gray": {},
+	"prod": {},
 }
 
-var releaseEnvLabelToCode = map[string]string{
-	"开发": "dev",
-	"测试": "test",
-	"灰度": "gray",
-	"生产": "prod",
+var supportedDeploymentModes = map[model.DeploymentMode]struct{}{
+	model.DeploymentModeRolling: {},
+	model.DeploymentModeCanary:  {},
 }
 
-var releaseEnvCodeToLabel = map[string]string{
-	"dev":  "开发",
-	"test": "测试",
-	"gray": "灰度",
-	"prod": "生产",
-}
-
-var deploymentModeLabelToCode = map[string]model.DeploymentMode{
-	"滚动发布": model.DeploymentModeRolling,
-	"金丝雀发布": model.DeploymentModeCanary,
-}
-
-var deploymentModeCodeToLabel = map[model.DeploymentMode]string{
-	model.DeploymentModeRolling: "滚动发布",
-	model.DeploymentModeCanary:  "金丝雀发布",
-}
-
-func (s *app) ListBusinessUnitCDConfigs(ctx context.Context, businessUnitID int64, req vo.CDConfigListReq) (*vo.CDConfigPageDTO, error) {
+func listBusinessUnitCDConfigs(ctx context.Context, businessUnitID int64, req vo.CDConfigListReq) (*vo.CDConfigPageDTO, error) {
 	page := req.Page
 	if page < 1 {
 		page = 1
@@ -123,7 +105,7 @@ func (s *app) ListBusinessUnitCDConfigs(ctx context.Context, businessUnitID int6
 	}, nil
 }
 
-func (s *app) GetCDConfig(ctx context.Context, id int64) (*vo.CDConfigFrontendVO, error) {
+func getCDConfig(ctx context.Context, id int64) (*vo.CDConfigFrontendVO, error) {
 	row, err := dao.Q.WithContext(ctx).CDConfig.Where(dao.CDConfig.ID.Eq(id)).First()
 	if err != nil {
 		return nil, fmt.Errorf("query cd_config id=%d: %w", id, err)
@@ -133,7 +115,7 @@ func (s *app) GetCDConfig(ctx context.Context, id int64) (*vo.CDConfigFrontendVO
 	return &res, nil
 }
 
-func (s *app) CreateBusinessUnitCDConfig(ctx context.Context, businessUnitID int64, req vo.UpsertCDConfigReq) (*vo.CDConfigFrontendVO, error) {
+func createBusinessUnitCDConfig(ctx context.Context, businessUnitID int64, req vo.UpsertCDConfigReq) (*vo.CDConfigFrontendVO, error) {
 	entity, err := buildCDConfigModel(businessUnitID, req, nil)
 	if err != nil {
 		return nil, err
@@ -147,7 +129,7 @@ func (s *app) CreateBusinessUnitCDConfig(ctx context.Context, businessUnitID int
 	return &res, nil
 }
 
-func (s *app) UpdateCDConfig(ctx context.Context, id int64, req vo.UpsertCDConfigReq) (*vo.CDConfigFrontendVO, error) {
+func updateCDConfig(ctx context.Context, id int64, req vo.UpsertCDConfigReq) (*vo.CDConfigFrontendVO, error) {
 	current, err := dao.Q.WithContext(ctx).CDConfig.Where(dao.CDConfig.ID.Eq(id)).First()
 	if err != nil {
 		return nil, fmt.Errorf("query cd_config id=%d: %w", id, err)
@@ -168,7 +150,7 @@ func (s *app) UpdateCDConfig(ctx context.Context, id int64, req vo.UpsertCDConfi
 	return &res, nil
 }
 
-func (s *app) DeleteCDConfig(ctx context.Context, id int64) error {
+func deleteCDConfig(ctx context.Context, id int64) error {
 	count, err := dao.Q.WithContext(ctx).DeployPlan.Where(dao.DeployPlan.CDConfigID.Eq(id)).Count()
 	if err != nil {
 		return fmt.Errorf("count deploy plans by cd_config_id=%d: %w", id, err)
@@ -336,14 +318,14 @@ func buildReleaseStrategy(mode model.DeploymentMode, req vo.UpsertCDConfigReq) (
 
 func toCDConfigFrontendVO(row *model.CDConfig) vo.CDConfigFrontendVO {
 	res := vo.CDConfigFrontendVO{
-		ID:             row.ID,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
-		Name:           row.Name,
-		BusinessUnitID: row.BusinessUnitID,
-		ReleaseRegion:  denormalizeReleaseRegion(row.ReleaseRegion),
-		ReleaseEnv:     denormalizeReleaseEnv(row.ReleaseEnv),
-		DeploymentMode: denormalizeDeploymentMode(row.ReleaseStrategy.DeploymentMode),
+		ID:              row.ID,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
+		Name:            row.Name,
+		BusinessUnitID:  row.BusinessUnitID,
+		ReleaseRegion:   row.ReleaseRegion,
+		ReleaseEnv:      row.ReleaseEnv,
+		DeploymentMode:  string(row.ReleaseStrategy.DeploymentMode),
 		StrategySummary: buildStrategySummary(row.ReleaseStrategy),
 	}
 
@@ -366,10 +348,7 @@ func normalizeReleaseRegion(value string) (string, error) {
 	if trimmed == "" {
 		return "", nil
 	}
-	if code, ok := releaseRegionLabelToCode[trimmed]; ok {
-		return code, nil
-	}
-	if _, ok := releaseRegionCodeToLabel[trimmed]; ok {
+	if _, ok := supportedReleaseRegions[trimmed]; ok {
 		return trimmed, nil
 	}
 	return "", fmt.Errorf("invalid release_region")
@@ -380,10 +359,7 @@ func normalizeReleaseEnv(value string) (string, error) {
 	if trimmed == "" {
 		return "", nil
 	}
-	if code, ok := releaseEnvLabelToCode[trimmed]; ok {
-		return code, nil
-	}
-	if _, ok := releaseEnvCodeToLabel[trimmed]; ok {
+	if _, ok := supportedReleaseEnvs[trimmed]; ok {
 		return trimmed, nil
 	}
 	return "", fmt.Errorf("invalid release_env")
@@ -394,36 +370,11 @@ func normalizeDeploymentMode(value string) (model.DeploymentMode, error) {
 	if trimmed == "" {
 		return "", nil
 	}
-	if mode, ok := deploymentModeLabelToCode[trimmed]; ok {
+	mode := model.DeploymentMode(trimmed)
+	if _, ok := supportedDeploymentModes[mode]; ok {
 		return mode, nil
 	}
-	for code := range deploymentModeCodeToLabel {
-		if string(code) == trimmed {
-			return code, nil
-		}
-	}
 	return "", fmt.Errorf("invalid deployment_mode")
-}
-
-func denormalizeReleaseRegion(value string) string {
-	if label, ok := releaseRegionCodeToLabel[value]; ok {
-		return label
-	}
-	return value
-}
-
-func denormalizeReleaseEnv(value string) string {
-	if label, ok := releaseEnvCodeToLabel[value]; ok {
-		return label
-	}
-	return value
-}
-
-func denormalizeDeploymentMode(value model.DeploymentMode) string {
-	if label, ok := deploymentModeCodeToLabel[value]; ok {
-		return label
-	}
-	return string(value)
 }
 
 func denormalizeTrafficRatios(values []float64) []float64 {
@@ -440,8 +391,8 @@ func buildStrategySummary(strategy model.ReleaseStrategy) string {
 		for _, ratio := range strategy.CanaryTrafficRule.TrafficRatioList {
 			parts = append(parts, fmt.Sprintf("%g%%", math.Round(ratio*10000)/100))
 		}
-		return fmt.Sprintf("%d 批次 / %s", strategy.CanaryTrafficRule.TrafficBatchCount, strings.Join(parts, ","))
+		return fmt.Sprintf("%d batches / %s", strategy.CanaryTrafficRule.TrafficBatchCount, strings.Join(parts, ","))
 	}
 
-	return "滚动发布（默认策略）"
+	return "rolling (default strategy)"
 }

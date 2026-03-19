@@ -98,7 +98,7 @@ func TestCreateBusinessUnit(t *testing.T) {
 	dao.SetDefault(db)
 
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `business_units`")).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "member-center", "负责会员账户与权益", 101).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "member-center", "负责会员账户与权益", 101).
 		WillReturnResult(sqlmock.NewResult(9, 1))
 
 	router := newBusinessUnitTestRouter()
@@ -141,13 +141,14 @@ func TestUpdateBusinessUnit(t *testing.T) {
 
 	selectRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "project_id"}).
 		AddRow(7, time.Date(2026, 3, 18, 9, 0, 0, 0, time.UTC), time.Date(2026, 3, 18, 9, 30, 0, 0, time.UTC), "old-name", "old-desc", 101)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `business_units` WHERE `business_units`.`id` = ? ORDER BY `business_units`.`id` LIMIT ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `business_units` WHERE `business_units`.`id` = ? AND `business_units`.`deleted_at` IS NULL ORDER BY `business_units`.`id` LIMIT ?")).
 		WithArgs(7, 1).
 		WillReturnRows(selectRows)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO `business_units`")).
 		WithArgs(
 			time.Date(2026, 3, 18, 9, 0, 0, 0, time.UTC),
 			time.Date(2026, 3, 18, 9, 30, 0, 0, time.UTC),
+			sqlmock.AnyArg(),
 			"new-name",
 			"new-desc",
 			int64(101),
@@ -196,10 +197,10 @@ func TestDeleteBusinessUnitBlockedByDependencies(t *testing.T) {
 
 	selectRows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "name", "description", "project_id"}).
 		AddRow(7, time.Date(2026, 3, 18, 9, 0, 0, 0, time.UTC), time.Date(2026, 3, 18, 9, 30, 0, 0, time.UTC), "api-server", "desc", 101)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `business_units` WHERE `business_units`.`id` = ? ORDER BY `business_units`.`id` LIMIT ?")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `business_units` WHERE `business_units`.`id` = ? AND `business_units`.`deleted_at` IS NULL ORDER BY `business_units`.`id` LIMIT ?")).
 		WithArgs(7, 1).
 		WillReturnRows(selectRows)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `ci_configs` WHERE `ci_configs`.`business_unit_id` = ?")).
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `ci_configs` WHERE .*`business_unit_id` = \\?").
 		WithArgs(7).
 		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(1))
 

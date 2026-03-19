@@ -14,7 +14,7 @@ import (
 	"github.com/richer421/q-metahub/pkg/testutil"
 )
 
-func TestToCIConfigVOAppliesDerivedFields(t *testing.T) {
+func TestToCIConfigVOAppliesBuildSpecDefaults(t *testing.T) {
 	createdAt := time.Date(2026, time.March, 18, 10, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2026, time.March, 18, 12, 0, 0, 0, time.UTC)
 
@@ -48,9 +48,6 @@ func TestToCIConfigVOAppliesDerivedFields(t *testing.T) {
 	if item.UpdatedAt != updatedAt {
 		t.Fatalf("expected updated_at %v, got %v", updatedAt, item.UpdatedAt)
 	}
-	if item.FullImageRepo != "harbor.example.com/project-a/api-server" {
-		t.Fatalf("expected full image repo to be derived, got %q", item.FullImageRepo)
-	}
 	if item.DeployPlanRefCount != 2 {
 		t.Fatalf("expected deploy plan ref count 2, got %d", item.DeployPlanRefCount)
 	}
@@ -83,7 +80,7 @@ func TestListBusinessUnitCIConfigsFiltersByName(t *testing.T) {
 		jsonValue(t, `{"makefile_path":"./Makefile","dockerfile_path":"./Dockerfile"}`),
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`business_unit_id` = \\? AND .*`name` LIKE \\? ORDER BY .*`updated_at` DESC LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`business_unit_id` = \\? AND .*`name` LIKE \\?.* ORDER BY .*`updated_at` DESC LIMIT \\?").
 		WithArgs(34, "%api%", 10).
 		WillReturnRows(rows)
 
@@ -110,8 +107,7 @@ func TestListBusinessUnitCIConfigsFiltersByName(t *testing.T) {
 
 func TestNormalizeCreateCIConfigAppliesDefaults(t *testing.T) {
 	req := vo.CreateCIConfigReq{
-		Name:          "  API-SERVER  ",
-		ImageRegistry: "harbor.example.com/project-a/",
+		Name: "  API-SERVER  ",
 		ImageTagRule: vo.CIConfigImageTagRuleVO{
 			Type: "branch",
 		},
@@ -126,8 +122,8 @@ func TestNormalizeCreateCIConfigAppliesDefaults(t *testing.T) {
 	if entity.Name != "API-SERVER" {
 		t.Fatalf("expected trimmed name, got %q", entity.Name)
 	}
-	if entity.ImageRegistry != "harbor.example.com/project-a" {
-		t.Fatalf("expected normalized registry, got %q", entity.ImageRegistry)
+	if entity.ImageRegistry != "api-server" {
+		t.Fatalf("expected default image registry, got %q", entity.ImageRegistry)
 	}
 	if entity.ImageRepo != "api-server" {
 		t.Fatalf("expected generated image repo, got %q", entity.ImageRepo)
@@ -135,7 +131,7 @@ func TestNormalizeCreateCIConfigAppliesDefaults(t *testing.T) {
 	if entity.BuildSpec.MakefilePath != "./Makefile" {
 		t.Fatalf("expected default makefile path, got %q", entity.BuildSpec.MakefilePath)
 	}
-	if entity.BuildSpec.MakeCommand != "build" {
+	if entity.BuildSpec.MakeCommand != "make build" {
 		t.Fatalf("expected default make command, got %q", entity.BuildSpec.MakeCommand)
 	}
 	if entity.BuildSpec.DockerfilePath != "./Dockerfile" {
@@ -151,8 +147,7 @@ func TestNormalizeCreateCIConfigAppliesDefaults(t *testing.T) {
 
 func TestNormalizeCreateCIConfigRejectsInvalidCustomTemplate(t *testing.T) {
 	req := vo.CreateCIConfigReq{
-		Name:          "api-server",
-		ImageRegistry: "harbor.example.com/project-a",
+		Name: "api-server",
 		ImageTagRule: vo.CIConfigImageTagRuleVO{
 			Type:     "custom",
 			Template: "release/${foo}",
@@ -172,13 +167,12 @@ func TestCreateBusinessUnitCIConfigRejectsMissingBusinessUnit(t *testing.T) {
 	}
 	dao.SetDefault(db)
 
-	mock.ExpectQuery("SELECT \\* FROM `business_units` WHERE .*`id` = \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `business_units` WHERE .*`id` = \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(34, 1).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
 
 	_, err = App.CreateBusinessUnitCIConfig(context.Background(), 34, vo.CreateCIConfigReq{
-		Name:          "api-server",
-		ImageRegistry: "harbor.example.com/project-a",
+		Name: "api-server",
 		ImageTagRule: vo.CIConfigImageTagRuleVO{
 			Type: "branch",
 		},
@@ -283,10 +277,10 @@ func TestUpdateCIConfigRejectsDuplicateNameInBusinessUnit(t *testing.T) {
 		jsonValue(t, `{}`),
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(12, 1).
 		WillReturnRows(currentRows)
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`business_unit_id` = \\? AND .*`name` = \\? AND .*`id` <> \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`business_unit_id` = \\? AND .*`name` = \\? AND .*`id` <> \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(34, "api-server-v2", 12, 1).
 		WillReturnRows(duplicateRows)
 
@@ -322,7 +316,7 @@ func TestDeleteCIConfigRejectsReferencedDeployPlans(t *testing.T) {
 		jsonValue(t, `{}`),
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(12, 1).
 		WillReturnRows(currentRows)
 	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `deploy_plans` WHERE .*`ci_config_id` = \\?").
@@ -330,7 +324,7 @@ func TestDeleteCIConfigRejectsReferencedDeployPlans(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(2))
 
 	err = App.DeleteCIConfig(context.Background(), 12)
-	if err == nil || !strings.Contains(err.Error(), "cannot be deleted") {
+	if err == nil || !strings.Contains(err.Error(), "禁止删除") {
 		t.Fatalf("expected delete guard error, got %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -359,14 +353,14 @@ func TestDeleteCIConfigSucceedsWhenUnreferenced(t *testing.T) {
 		jsonValue(t, `{}`),
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(12, 1).
 		WillReturnRows(currentRows)
 	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `deploy_plans` WHERE .*`ci_config_id` = \\?").
 		WithArgs(12).
 		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(0))
-	mock.ExpectExec("DELETE FROM `ci_configs` WHERE `ci_configs`.`id` = \\?").
-		WithArgs(12).
+	mock.ExpectExec("UPDATE `ci_configs` SET `deleted_at`=\\? WHERE `ci_configs`.`id` = \\? AND `ci_configs`.`deleted_at` IS NULL").
+		WithArgs(sqlmock.AnyArg(), 12).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	if err := App.DeleteCIConfig(context.Background(), 12); err != nil {
@@ -377,7 +371,7 @@ func TestDeleteCIConfigSucceedsWhenUnreferenced(t *testing.T) {
 	}
 }
 
-func TestGetCIConfigReturnsDerivedFields(t *testing.T) {
+func TestGetCIConfigAppliesBuildSpecDefaults(t *testing.T) {
 	db, mock, err := testutil.NewMockDB()
 	if err != nil {
 		t.Fatalf("create mock db: %v", err)
@@ -398,16 +392,13 @@ func TestGetCIConfigReturnsDerivedFields(t *testing.T) {
 		jsonValue(t, `{}`),
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\? ORDER BY .*`id` LIMIT \\?").
+	mock.ExpectQuery("SELECT \\* FROM `ci_configs` WHERE .*`id` = \\?.* ORDER BY .*`id` LIMIT \\?").
 		WithArgs(12, 1).
 		WillReturnRows(rows)
 
 	item, err := App.GetCIConfig(context.Background(), 12)
 	if err != nil {
 		t.Fatalf("get ci config: %v", err)
-	}
-	if item.FullImageRepo != "harbor.example.com/project-a/api-server" {
-		t.Fatalf("expected derived full image repo, got %q", item.FullImageRepo)
 	}
 	if item.BuildSpec.MakefilePath != "./Makefile" || item.BuildSpec.DockerfilePath != "./Dockerfile" {
 		t.Fatalf("expected defaulted build paths, got %+v", item.BuildSpec)

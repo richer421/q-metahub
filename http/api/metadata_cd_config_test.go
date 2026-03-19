@@ -55,6 +55,7 @@ func TestCreateBusinessUnitCDConfigCreatesRollingConfig(t *testing.T) {
 		WithArgs(
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
 			"api-server-dev",
 			int64(1),
 			"cn-east",
@@ -70,7 +71,7 @@ func TestCreateBusinessUnitCDConfigCreatesRollingConfig(t *testing.T) {
 	req := httptest.NewRequest(
 		http.MethodPost,
 		"/api/v1/business-units/1/cd-configs",
-		bytes.NewBufferString(`{"name":"api-server-dev","release_region":"华东","release_env":"开发","deployment_mode":"滚动发布"}`),
+		bytes.NewBufferString(`{"name":"api-server-dev","release_region":"cn-east","release_env":"dev","deployment_mode":"rolling"}`),
 	)
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
@@ -79,9 +80,9 @@ func TestCreateBusinessUnitCDConfigCreatesRollingConfig(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Contains(t, resp.Body.String(), "\"name\":\"api-server-dev\"")
-	assert.Contains(t, resp.Body.String(), "\"release_region\":\"华东\"")
-	assert.Contains(t, resp.Body.String(), "\"release_env\":\"开发\"")
-	assert.Contains(t, resp.Body.String(), "\"deployment_mode\":\"滚动发布\"")
+	assert.Contains(t, resp.Body.String(), "\"release_region\":\"cn-east\"")
+	assert.Contains(t, resp.Body.String(), "\"release_env\":\"dev\"")
+	assert.Contains(t, resp.Body.String(), "\"deployment_mode\":\"rolling\"")
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 

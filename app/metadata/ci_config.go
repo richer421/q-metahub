@@ -24,7 +24,7 @@ var (
 	validCustomTemplatePattern = regexp.MustCompile(`^([A-Za-z0-9]+|[-_.]|\$\{(branch|tag|commit|timestamp)\})+$`)
 )
 
-func (s *app) ListBusinessUnitCIConfigs(ctx context.Context, businessUnitID int64, page int, pageSize int, keyword string) (*vo.CIConfigPageVO, error) {
+func listBusinessUnitCIConfigs(ctx context.Context, businessUnitID int64, page int, pageSize int, keyword string) (*vo.CIConfigPageVO, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -59,7 +59,7 @@ func (s *app) ListBusinessUnitCIConfigs(ctx context.Context, businessUnitID int6
 	}, nil
 }
 
-func (s *app) GetCIConfig(ctx context.Context, ciConfigID int64) (*vo.CIConfigVO, error) {
+func getCIConfig(ctx context.Context, ciConfigID int64) (*vo.CIConfigVO, error) {
 	row, err := dao.Q.WithContext(ctx).CIConfig.Where(dao.CIConfig.ID.Eq(ciConfigID)).First()
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *app) GetCIConfig(ctx context.Context, ciConfigID int64) (*vo.CIConfigVO
 	return &item, nil
 }
 
-func (s *app) CreateBusinessUnitCIConfig(ctx context.Context, businessUnitID int64, req vo.CreateCIConfigReq) (*vo.CIConfigVO, error) {
+func createBusinessUnitCIConfig(ctx context.Context, businessUnitID int64, req vo.CreateCIConfigReq) (*vo.CIConfigVO, error) {
 	businessUnit, err := dao.Q.WithContext(ctx).BusinessUnit.Where(dao.BusinessUnit.ID.Eq(businessUnitID)).First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -100,7 +100,7 @@ func (s *app) CreateBusinessUnitCIConfig(ctx context.Context, businessUnitID int
 	return &item, nil
 }
 
-func (s *app) UpdateCIConfig(ctx context.Context, ciConfigID int64, req vo.UpdateCIConfigReq) (*vo.CIConfigVO, error) {
+func updateCIConfig(ctx context.Context, ciConfigID int64, req vo.UpdateCIConfigReq) (*vo.CIConfigVO, error) {
 	current, err := dao.Q.WithContext(ctx).CIConfig.Where(dao.CIConfig.ID.Eq(ciConfigID)).First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -132,7 +132,7 @@ func (s *app) UpdateCIConfig(ctx context.Context, ciConfigID int64, req vo.Updat
 	return &item, nil
 }
 
-func (s *app) DeleteCIConfig(ctx context.Context, ciConfigID int64) error {
+func deleteCIConfig(ctx context.Context, ciConfigID int64) error {
 	current, err := dao.Q.WithContext(ctx).CIConfig.Where(dao.CIConfig.ID.Eq(ciConfigID)).First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -146,7 +146,7 @@ func (s *app) DeleteCIConfig(ctx context.Context, ciConfigID int64) error {
 		return err
 	}
 	if refCount > 0 {
-		return fmt.Errorf("ci config is referenced by %d deploy plans and cannot be deleted", refCount)
+		return fmt.Errorf("该 CI 配置已被 %d 个部署计划引用，禁止删除", refCount)
 	}
 
 	_, err = dao.Q.WithContext(ctx).CIConfig.Delete(current)
@@ -155,12 +155,10 @@ func (s *app) DeleteCIConfig(ctx context.Context, ciConfigID int64) error {
 
 func normalizeCreateCIConfig(businessUnitID int64, req vo.CreateCIConfigReq, businessUnitName string) (*model.CIConfig, error) {
 	name := strings.TrimSpace(req.Name)
-	imageRegistry := normalizeImageRegistry(req.ImageRegistry)
+	imageRegistry := deriveDefaultImageRegistry(businessUnitID, businessUnitName)
+	imageRepo := deriveDefaultImageRepo(businessUnitID, name, businessUnitName)
 	if name == "" {
 		return nil, fmt.Errorf("name is required")
-	}
-	if imageRegistry == "" {
-		return nil, fmt.Errorf("image_registry is required")
 	}
 	imageTagRule, err := normalizeImageTagRule(req.ImageTagRule)
 	if err != nil {
@@ -175,7 +173,7 @@ func normalizeCreateCIConfig(businessUnitID int64, req vo.CreateCIConfigReq, bus
 		Name:           name,
 		BusinessUnitID: businessUnitID,
 		ImageRegistry:  imageRegistry,
-		ImageRepo:      normalizeImageRepo(businessUnitName),
+		ImageRepo:      imageRepo,
 		ImageTagRule:   imageTagRule,
 		BuildSpec:      buildSpec,
 	}, nil
@@ -188,12 +186,6 @@ func mergeCIConfigUpdate(current *model.CIConfig, req vo.UpdateCIConfigReq) (*mo
 		next.Name = strings.TrimSpace(*req.Name)
 		if next.Name == "" {
 			return nil, fmt.Errorf("name is required")
-		}
-	}
-	if req.ImageRegistry != nil {
-		next.ImageRegistry = normalizeImageRegistry(*req.ImageRegistry)
-		if next.ImageRegistry == "" {
-			return nil, fmt.Errorf("image_registry is required")
 		}
 	}
 	if req.ImageTagRule != nil {
@@ -212,10 +204,6 @@ func mergeCIConfigUpdate(current *model.CIConfig, req vo.UpdateCIConfigReq) (*mo
 	}
 
 	return &next, nil
-}
-
-func normalizeImageRegistry(value string) string {
-	return strings.TrimRight(strings.TrimSpace(value), "/")
 }
 
 func normalizeImageRepo(name string) string {
@@ -240,6 +228,23 @@ func normalizeImageRepo(name string) string {
 	}
 
 	return strings.Trim(builder.String(), "-")
+}
+
+func deriveDefaultImageRegistry(businessUnitID int64, businessUnitName string) string {
+	if normalized := normalizeImageRepo(businessUnitName); normalized != "" {
+		return normalized
+	}
+	return fmt.Sprintf("bu-%d", businessUnitID)
+}
+
+func deriveDefaultImageRepo(businessUnitID int64, configName string, businessUnitName string) string {
+	if normalized := normalizeImageRepo(configName); normalized != "" {
+		return normalized
+	}
+	if normalized := normalizeImageRepo(businessUnitName); normalized != "" {
+		return normalized
+	}
+	return fmt.Sprintf("repo-%d", businessUnitID)
 }
 
 func normalizeImageTagRule(in vo.CIConfigImageTagRuleVO) (model.ImageTagRule, error) {
@@ -284,8 +289,13 @@ func normalizeBuildSpec(in vo.CIConfigBuildSpecVO, current model.BuildSpec) (mod
 	}
 
 	buildSpec.MakefilePath = makefilePath
-	if buildSpec.MakeCommand == "" {
-		buildSpec.MakeCommand = "build"
+	if normalizedCommand := strings.TrimSpace(in.MakeCommand); normalizedCommand != "" {
+		if normalizedCommand == "build" {
+			normalizedCommand = "make build"
+		}
+		buildSpec.MakeCommand = normalizedCommand
+	} else if buildSpec.MakeCommand == "" {
+		buildSpec.MakeCommand = "make build"
 	}
 	buildSpec.DockerfilePath = dockerfilePath
 	if buildSpec.DockerContext == "" {

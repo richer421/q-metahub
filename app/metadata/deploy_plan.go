@@ -113,9 +113,6 @@ func toCIConfigVO(in *model.CIConfig) vo.CIConfigVO {
 		UpdatedAt:      in.UpdatedAt,
 		Name:           in.Name,
 		BusinessUnitID: in.BusinessUnitID,
-		ImageRegistry:  in.ImageRegistry,
-		ImageRepo:      in.ImageRepo,
-		FullImageRepo:  in.ImageRegistry + "/" + in.ImageRepo,
 		ImageTagRule: vo.CIConfigImageTagRuleVO{
 			Type:          in.ImageTagRule.Type,
 			Template:      in.ImageTagRule.Template,
@@ -127,7 +124,7 @@ func toCIConfigVO(in *model.CIConfig) vo.CIConfigVO {
 			Tag:            in.BuildSpec.Tag,
 			CommitID:       in.BuildSpec.CommitID,
 			MakefilePath:   defaultString(in.BuildSpec.MakefilePath, "./Makefile"),
-			MakeCommand:    in.BuildSpec.MakeCommand,
+			MakeCommand:    normalizeCIBuildCommand(in.BuildSpec.MakeCommand),
 			DockerfilePath: defaultString(in.BuildSpec.DockerfilePath, "./Dockerfile"),
 			DockerContext:  in.BuildSpec.DockerContext,
 			BuildArgs:      in.BuildSpec.BuildArgs,
@@ -186,4 +183,11 @@ func defaultString(value string, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func normalizeCIBuildCommand(command string) string {
+	if command == "" || command == "build" {
+		return "make build"
+	}
+	return command
 }

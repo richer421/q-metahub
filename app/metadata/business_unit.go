@@ -10,7 +10,7 @@ import (
 	"github.com/richer421/q-metahub/infra/mysql/model"
 )
 
-func (s *app) ListBusinessUnits(ctx context.Context, page int, pageSize int, keyword string) (*vo.BusinessUnitPageDTO, error) {
+func listBusinessUnits(ctx context.Context, page int, pageSize int, keyword string) (*vo.BusinessUnitPageDTO, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -43,7 +43,7 @@ func (s *app) ListBusinessUnits(ctx context.Context, page int, pageSize int, key
 	}, nil
 }
 
-func (s *app) CreateBusinessUnit(ctx context.Context, req vo.CreateBusinessUnitReq) (*vo.BusinessUnitVO, error) {
+func createBusinessUnit(ctx context.Context, req vo.CreateBusinessUnitReq) (*vo.BusinessUnitVO, error) {
 	entity := &model.BusinessUnit{
 		Name:        strings.TrimSpace(req.Name),
 		Description: strings.TrimSpace(req.Description),
@@ -58,7 +58,7 @@ func (s *app) CreateBusinessUnit(ctx context.Context, req vo.CreateBusinessUnitR
 	return &dto, nil
 }
 
-func (s *app) UpdateBusinessUnit(ctx context.Context, businessUnitID int64, req vo.UpdateBusinessUnitReq) (*vo.BusinessUnitVO, error) {
+func updateBusinessUnit(ctx context.Context, businessUnitID int64, req vo.UpdateBusinessUnitReq) (*vo.BusinessUnitVO, error) {
 	entity, err := dao.Q.WithContext(ctx).BusinessUnit.Where(dao.BusinessUnit.ID.Eq(businessUnitID)).First()
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (s *app) UpdateBusinessUnit(ctx context.Context, businessUnitID int64, req 
 	return &dto, nil
 }
 
-func (s *app) DeleteBusinessUnit(ctx context.Context, businessUnitID int64) error {
+func deleteBusinessUnit(ctx context.Context, businessUnitID int64) error {
 	entity, err := dao.Q.WithContext(ctx).BusinessUnit.Where(dao.BusinessUnit.ID.Eq(businessUnitID)).First()
 	if err != nil {
 		return err

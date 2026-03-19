@@ -78,17 +78,14 @@ type BusinessUnitPageDTO struct {
 }
 
 type CIConfigVO struct {
-	ID                 int64                `json:"id"`
-	CreatedAt          time.Time            `json:"created_at"`
-	UpdatedAt          time.Time            `json:"updated_at"`
-	Name               string               `json:"name"`
-	BusinessUnitID     int64                `json:"business_unit_id"`
-	ImageRegistry      string               `json:"image_registry"`
-	ImageRepo          string               `json:"image_repo"`
-	FullImageRepo      string               `json:"full_image_repo"`
+	ID                 int64                  `json:"id"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
+	Name               string                 `json:"name"`
+	BusinessUnitID     int64                  `json:"business_unit_id"`
 	ImageTagRule       CIConfigImageTagRuleVO `json:"image_tag_rule"`
 	BuildSpec          CIConfigBuildSpecVO    `json:"build_spec"`
-	DeployPlanRefCount int64                `json:"deploy_plan_ref_count,omitempty"`
+	DeployPlanRefCount int64                  `json:"deploy_plan_ref_count,omitempty"`
 }
 
 type CIConfigImageTagRuleVO struct {
@@ -117,17 +114,15 @@ type CIConfigPageVO struct {
 }
 
 type CreateCIConfigReq struct {
-	Name          string               `json:"name"`
-	ImageRegistry string               `json:"image_registry"`
-	ImageTagRule  CIConfigImageTagRuleVO `json:"image_tag_rule"`
-	BuildSpec     CIConfigBuildSpecVO    `json:"build_spec"`
+	Name         string                 `json:"name"`
+	ImageTagRule CIConfigImageTagRuleVO `json:"image_tag_rule"`
+	BuildSpec    CIConfigBuildSpecVO    `json:"build_spec"`
 }
 
 type UpdateCIConfigReq struct {
-	Name          *string                `json:"name,omitempty"`
-	ImageRegistry *string                `json:"image_registry,omitempty"`
-	ImageTagRule  *CIConfigImageTagRuleVO `json:"image_tag_rule,omitempty"`
-	BuildSpec     *CIConfigBuildSpecVO    `json:"build_spec,omitempty"`
+	Name         *string                 `json:"name,omitempty"`
+	ImageTagRule *CIConfigImageTagRuleVO `json:"image_tag_rule,omitempty"`
+	BuildSpec    *CIConfigBuildSpecVO    `json:"build_spec,omitempty"`
 }
 
 type CDConfigVO struct {

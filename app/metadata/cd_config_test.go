@@ -33,9 +33,9 @@ func TestBuildCDConfigModelRollingUsesDefaults(t *testing.T) {
 
 	entity, err := buildCDConfigModel(7, vo.UpsertCDConfigReq{
 		Name:           "api-server-dev",
-		ReleaseRegion:  "华东",
-		ReleaseEnv:     "开发",
-		DeploymentMode: "滚动发布",
+		ReleaseRegion:  "cn-east",
+		ReleaseEnv:     "dev",
+		DeploymentMode: "rolling",
 	}, nil)
 	require.NoError(t, err)
 
@@ -65,9 +65,9 @@ func TestBuildCDConfigModelCanaryMapsAdvancedFields(t *testing.T) {
 
 	entity, err := buildCDConfigModel(8, vo.UpsertCDConfigReq{
 		Name:                 "api-server-gray",
-		ReleaseRegion:        "新加坡",
-		ReleaseEnv:           "灰度",
-		DeploymentMode:       "金丝雀发布",
+		ReleaseRegion:        "ap-singapore",
+		ReleaseEnv:           "gray",
+		DeploymentMode:       "canary",
 		TrafficBatchCount:    &trafficBatchCount,
 		TrafficRatioList:     []float64{10, 30, 60},
 		ManualAdjust:         &manualAdjust,
@@ -85,11 +85,11 @@ func TestBuildCDConfigModelCanaryMapsAdvancedFields(t *testing.T) {
 	assert.Equal(t, 600, entity.ReleaseStrategy.CanaryTrafficRule.AdjustTimeout)
 }
 
-func TestToCDConfigFrontendVOMapsChineseLabelsAndSummary(t *testing.T) {
+func TestToCDConfigFrontendVOMapsCodesAndSummary(t *testing.T) {
 	t.Parallel()
 
 	res := toCDConfigFrontendVO(&model.CDConfig{
-		BaseModel: model.BaseModel{ID: 1},
+		BaseModel:      model.BaseModel{ID: 1},
 		Name:           "api-server-prod",
 		BusinessUnitID: 9,
 		ReleaseRegion:  "cn-north",
@@ -105,10 +105,10 @@ func TestToCDConfigFrontendVOMapsChineseLabelsAndSummary(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, "华北", res.ReleaseRegion)
-	assert.Equal(t, "生产", res.ReleaseEnv)
-	assert.Equal(t, "金丝雀发布", res.DeploymentMode)
-	assert.Equal(t, "3 批次 / 10%,30%,60%", res.StrategySummary)
+	assert.Equal(t, "cn-north", res.ReleaseRegion)
+	assert.Equal(t, "prod", res.ReleaseEnv)
+	assert.Equal(t, "canary", res.DeploymentMode)
+	assert.Equal(t, "3 batches / 10%,30%,60%", res.StrategySummary)
 	require.NotNil(t, res.TrafficBatchCount)
 	assert.Equal(t, 3, *res.TrafficBatchCount)
 	assert.Equal(t, []float64{10, 30, 60}, res.TrafficRatioList)

@@ -106,6 +106,9 @@ make clean          # 清理 bin/ 目录
 - 所有方法第一个参数为 `context.Context`
 - handler 不向 app 透传 `*gin.Context`
 - app 层直接组织 DAO 调用与 VO ↔ Model 转换
+- 对外暴露给 `http/api` 的 app 方法统一收敛在 `app/<module>/app.go` 中
+- `app/<module>/` 下其它文件仅保留模块内的视图转换、查询封装、校验与组装函数
+- app 层文件命名统一使用 snake_case（如 `deploy_plan.go`、`instance_oam.go`、`ci_config.go`）
 - 不为简单链路引入额外 service wrapper、接口分层或依赖注入容器
 
 ### 命名规范
