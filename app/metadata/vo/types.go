@@ -50,6 +50,17 @@ type ProjectVO struct {
 	RepoURL   string    `json:"repo_url"`
 }
 
+type CreateBusinessUnitReq struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ProjectID   int64  `json:"project_id"`
+}
+
+type UpdateBusinessUnitReq struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type BusinessUnitVO struct {
 	ID          int64     `json:"id"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -59,16 +70,59 @@ type BusinessUnitVO struct {
 	ProjectID   int64     `json:"project_id"`
 }
 
+type BusinessUnitPageDTO struct {
+	Items    []BusinessUnitVO `json:"items"`
+	Total    int64            `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
+}
+
 type CIConfigVO struct {
-	ID             int64          `json:"id"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	Name           string         `json:"name"`
-	BusinessUnitID int64          `json:"business_unit_id"`
-	ImageRegistry  string         `json:"image_registry"`
-	ImageRepo      string         `json:"image_repo"`
-	ImageTagRule   map[string]any `json:"image_tag_rule"`
-	BuildSpec      map[string]any `json:"build_spec"`
+	ID                 int64                  `json:"id"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
+	Name               string                 `json:"name"`
+	BusinessUnitID     int64                  `json:"business_unit_id"`
+	ImageTagRule       CIConfigImageTagRuleVO `json:"image_tag_rule"`
+	BuildSpec          CIConfigBuildSpecVO    `json:"build_spec"`
+	DeployPlanRefCount int64                  `json:"deploy_plan_ref_count,omitempty"`
+}
+
+type CIConfigImageTagRuleVO struct {
+	Type          string `json:"type"`
+	Template      string `json:"template,omitempty"`
+	WithTimestamp bool   `json:"with_timestamp,omitempty"`
+	WithCommit    bool   `json:"with_commit,omitempty"`
+}
+
+type CIConfigBuildSpecVO struct {
+	Branch         *string           `json:"branch,omitempty"`
+	Tag            *string           `json:"tag,omitempty"`
+	CommitID       *string           `json:"commit_id,omitempty"`
+	MakefilePath   string            `json:"makefile_path,omitempty"`
+	MakeCommand    string            `json:"make_command,omitempty"`
+	DockerfilePath string            `json:"dockerfile_path,omitempty"`
+	DockerContext  string            `json:"docker_context,omitempty"`
+	BuildArgs      map[string]string `json:"build_args,omitempty"`
+}
+
+type CIConfigPageVO struct {
+	Items    []CIConfigVO `json:"items"`
+	Total    int64        `json:"total"`
+	Page     int          `json:"page"`
+	PageSize int          `json:"page_size"`
+}
+
+type CreateCIConfigReq struct {
+	Name         string                 `json:"name"`
+	ImageTagRule CIConfigImageTagRuleVO `json:"image_tag_rule"`
+	BuildSpec    CIConfigBuildSpecVO    `json:"build_spec"`
+}
+
+type UpdateCIConfigReq struct {
+	Name         *string                 `json:"name,omitempty"`
+	ImageTagRule *CIConfigImageTagRuleVO `json:"image_tag_rule,omitempty"`
+	BuildSpec    *CIConfigBuildSpecVO    `json:"build_spec,omitempty"`
 }
 
 type CDConfigVO struct {
@@ -81,6 +135,49 @@ type CDConfigVO struct {
 	ValuesYAML      string         `json:"values_yaml"`
 	ReleaseStrategy map[string]any `json:"release_strategy"`
 	GitOps          map[string]any `json:"git_ops,omitempty"`
+}
+
+type CDConfigListReq struct {
+	Page           int    `form:"page"`
+	PageSize       int    `form:"page_size"`
+	Keyword        string `form:"keyword"`
+	ReleaseRegion  string `form:"release_region"`
+	ReleaseEnv     string `form:"release_env"`
+	DeploymentMode string `form:"deployment_mode"`
+}
+
+type UpsertCDConfigReq struct {
+	Name                 string    `json:"name"`
+	ReleaseRegion        string    `json:"release_region"`
+	ReleaseEnv           string    `json:"release_env"`
+	DeploymentMode       string    `json:"deployment_mode"`
+	TrafficBatchCount    *int      `json:"traffic_batch_count,omitempty"`
+	TrafficRatioList     []float64 `json:"traffic_ratio_list,omitempty"`
+	ManualAdjust         *bool     `json:"manual_adjust,omitempty"`
+	AdjustTimeoutSeconds *int      `json:"adjust_timeout_seconds,omitempty"`
+}
+
+type CDConfigFrontendVO struct {
+	ID                   int64     `json:"id"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	Name                 string    `json:"name"`
+	BusinessUnitID       int64     `json:"business_unit_id"`
+	ReleaseRegion        string    `json:"release_region"`
+	ReleaseEnv           string    `json:"release_env"`
+	DeploymentMode       string    `json:"deployment_mode"`
+	StrategySummary      string    `json:"strategy_summary"`
+	TrafficBatchCount    *int      `json:"traffic_batch_count,omitempty"`
+	TrafficRatioList     []float64 `json:"traffic_ratio_list,omitempty"`
+	ManualAdjust         *bool     `json:"manual_adjust,omitempty"`
+	AdjustTimeoutSeconds *int      `json:"adjust_timeout_seconds,omitempty"`
+}
+
+type CDConfigPageDTO struct {
+	Items    []CDConfigFrontendVO `json:"items"`
+	Total    int64                `json:"total"`
+	Page     int                  `json:"page"`
+	PageSize int                  `json:"page_size"`
 }
 
 type InstanceOAMVO struct {

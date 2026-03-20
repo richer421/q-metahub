@@ -18,6 +18,19 @@
 - 入参：`CreateInstanceOAMReq`（包含前端视图模型）
 - 行为：将前端视图模型转换为 OAM-Lite 后写入 `instance_oams`
 
+同时提供业务单元级 CD 配置管理：
+
+- `GET /api/v1/business-units/:id/cd-configs`
+- `POST /api/v1/business-units/:id/cd-configs`
+- `GET /api/v1/cd-configs/:id`
+- `PUT /api/v1/cd-configs/:id`
+- `DELETE /api/v1/cd-configs/:id`
+
+约束说明：
+
+- 前端输入的是业务视图字段，后端负责转换为内部模型与默认规则。
+- 删除 CD 配置前会检查是否被部署计划引用；若存在引用，接口返回业务错误并拒绝删除。
+
 ### 对外读模型（Open Model）
 
 提供部署计划聚合读模型：

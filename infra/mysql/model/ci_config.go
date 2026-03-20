@@ -12,8 +12,8 @@ import (
 // 核心设计：代码拉取维度（Branch/Tag/CommitID 三选一，互斥）
 type CIConfig struct {
 	BaseModel
-	Name           string       `gorm:"column:name;type:varchar(64);not null" json:"name"`
-	BusinessUnitID int64        `gorm:"column:business_unit_id;not null;index" json:"business_unit_id"` // 关联业务单元（间接关联 Project）
+	Name           string       `gorm:"column:name;type:varchar(64);not null;uniqueIndex:uk_ci_config_identity" json:"name"`
+	BusinessUnitID int64        `gorm:"column:business_unit_id;not null;index;uniqueIndex:uk_ci_config_identity" json:"business_unit_id"` // 关联业务单元（间接关联 Project）
 	ImageRegistry  string       `gorm:"column:image_registry;type:varchar(255);not null" json:"image_registry"` // 镜像仓库地址（如 registry.example.com）
 	ImageRepo      string       `gorm:"column:image_repo;type:varchar(255);not null" json:"image_repo"`        // 镜像仓库路径（如 library/myapp）
 	ImageTagRule   ImageTagRule `gorm:"column:image_tag_rule;type:json;not null" json:"image_tag_rule"`         // 镜像标签规则

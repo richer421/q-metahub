@@ -35,7 +35,6 @@ func newInstanceOAM(db *gorm.DB, opts ...gen.DOOption) instanceOAM {
 	_instanceOAM.Env = field.NewString(tableName, "env")
 	_instanceOAM.SchemaVersion = field.NewString(tableName, "schema_version")
 	_instanceOAM.OAMApplication = field.NewField(tableName, "oam_application")
-	_instanceOAM.FrontendPayload = field.NewField(tableName, "frontend_payload")
 
 	_instanceOAM.fillFieldMap()
 
@@ -45,16 +44,15 @@ func newInstanceOAM(db *gorm.DB, opts ...gen.DOOption) instanceOAM {
 type instanceOAM struct {
 	instanceOAMDo instanceOAMDo
 
-	ALL             field.Asterisk
-	ID              field.Int64
-	CreatedAt       field.Time
-	UpdatedAt       field.Time
-	Name            field.String
-	BusinessUnitID  field.Int64
-	Env             field.String
-	SchemaVersion   field.String
-	OAMApplication  field.Field
-	FrontendPayload field.Field
+	ALL            field.Asterisk
+	ID             field.Int64
+	CreatedAt      field.Time
+	UpdatedAt      field.Time
+	Name           field.String
+	BusinessUnitID field.Int64
+	Env            field.String
+	SchemaVersion  field.String
+	OAMApplication field.Field
 
 	fieldMap map[string]field.Expr
 }
@@ -79,7 +77,6 @@ func (i *instanceOAM) updateTableName(table string) *instanceOAM {
 	i.Env = field.NewString(table, "env")
 	i.SchemaVersion = field.NewString(table, "schema_version")
 	i.OAMApplication = field.NewField(table, "oam_application")
-	i.FrontendPayload = field.NewField(table, "frontend_payload")
 
 	i.fillFieldMap()
 
@@ -106,7 +103,7 @@ func (i *instanceOAM) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (i *instanceOAM) fillFieldMap() {
-	i.fieldMap = make(map[string]field.Expr, 9)
+	i.fieldMap = make(map[string]field.Expr, 8)
 	i.fieldMap["id"] = i.ID
 	i.fieldMap["created_at"] = i.CreatedAt
 	i.fieldMap["updated_at"] = i.UpdatedAt
@@ -115,7 +112,6 @@ func (i *instanceOAM) fillFieldMap() {
 	i.fieldMap["env"] = i.Env
 	i.fieldMap["schema_version"] = i.SchemaVersion
 	i.fieldMap["oam_application"] = i.OAMApplication
-	i.fieldMap["frontend_payload"] = i.FrontendPayload
 }
 
 func (i instanceOAM) clone(db *gorm.DB) instanceOAM {

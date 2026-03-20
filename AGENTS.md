@@ -15,7 +15,7 @@
 
 - 使用轻量 `App`：`var App = new(app)`，方法显式接收 `context.Context`。
 - 不为“可测性”引入厚接口或复杂依赖注入容器。
-- 业务逻辑按领域拆文件（例如 `deployPlan.go`、`oam.go`），避免一个超大 assembler 文件。
+- 业务逻辑按领域拆文件（例如 `deploy_plan.go`、`oam.go`），避免一个超大 assembler 文件。
 - 转换逻辑要分层拆开，避免把整条映射链揉进一个大函数里。
 
 ## 3. 路由语义风格

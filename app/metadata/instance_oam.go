@@ -44,8 +44,8 @@ type frontendInstanceSpec struct {
 }
 
 type frontendDeploymentSpec struct {
-	Replicas int32                 `json:"replicas,omitempty"`
-	Template *frontendPodTemplate  `json:"template,omitempty"`
+	Replicas int32                `json:"replicas,omitempty"`
+	Template *frontendPodTemplate `json:"template,omitempty"`
 }
 
 type frontendPodTemplate struct {
@@ -109,7 +109,7 @@ type frontendServicePort struct {
 	TargetPort int `json:"targetPort"`
 }
 
-func (s *app) ListInstanceOAMTemplates(_ context.Context) []vo.InstanceOAMTemplateDTO {
+func listInstanceOAMTemplates(_ context.Context) []vo.InstanceOAMTemplateDTO {
 	items := make([]vo.InstanceOAMTemplateDTO, 0, len(conf.C.InstanceOAMTemplates))
 	for _, item := range conf.C.InstanceOAMTemplates {
 		items = append(items, vo.InstanceOAMTemplateDTO{
@@ -126,7 +126,7 @@ func (s *app) ListInstanceOAMTemplates(_ context.Context) []vo.InstanceOAMTempla
 	return items
 }
 
-func (s *app) ListBusinessUnitInstanceOAMs(ctx context.Context, businessUnitID int64, page int, pageSize int, env string, keyword string) (*vo.InstanceOAMPageDTO, error) {
+func listBusinessUnitInstanceOAMs(ctx context.Context, businessUnitID int64, page int, pageSize int, env string, keyword string) (*vo.InstanceOAMPageDTO, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -168,7 +168,7 @@ func (s *app) ListBusinessUnitInstanceOAMs(ctx context.Context, businessUnitID i
 	}, nil
 }
 
-func (s *app) CreateBusinessUnitInstanceOAM(ctx context.Context, businessUnitID int64, req vo.CreateInstanceOAMFromTemplateReq) (*vo.InstanceOAMDTO, error) {
+func createBusinessUnitInstanceOAM(ctx context.Context, businessUnitID int64, req vo.CreateInstanceOAMFromTemplateReq) (*vo.InstanceOAMDTO, error) {
 	templateConfig, ok := findInstanceOAMTemplate(req.TemplateKey)
 	if !ok {
 		return nil, fmt.Errorf("instance template %q not found", strings.TrimSpace(req.TemplateKey))
@@ -194,7 +194,7 @@ func (s *app) CreateBusinessUnitInstanceOAM(ctx context.Context, businessUnitID 
 	return &dto, nil
 }
 
-func (s *app) UpdateInstanceOAM(ctx context.Context, instanceOAMID int64, req vo.UpdateInstanceOAMReq) (*vo.InstanceOAMDTO, error) {
+func updateInstanceOAM(ctx context.Context, instanceOAMID int64, req vo.UpdateInstanceOAMReq) (*vo.InstanceOAMDTO, error) {
 	entity, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(instanceOAMID)).First()
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (s *app) UpdateInstanceOAM(ctx context.Context, instanceOAMID int64, req vo
 	return &dto, nil
 }
 
-func (s *app) DeleteInstanceOAM(ctx context.Context, instanceOAMID int64) error {
+func deleteInstanceOAM(ctx context.Context, instanceOAMID int64) error {
 	entity, err := dao.Q.WithContext(ctx).InstanceOAM.Where(dao.InstanceOAM.ID.Eq(instanceOAMID)).First()
 	if err != nil {
 		return err
