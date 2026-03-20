@@ -46,6 +46,72 @@ func TestListBusinessUnitCIConfigsRejectsInvalidPageSize(t *testing.T) {
 	assertErrorMessage(t, w, "invalid page_size")
 }
 
+func TestListBusinessUnitDeployPlansRejectsInvalidBusinessUnitID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "bad-id"}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/business-units/bad-id/deploy-plans", nil)
+
+	ListBusinessUnitDeployPlans(c)
+
+	assertErrorMessage(t, w, "invalid business unit id")
+}
+
+func TestListBusinessUnitDeployPlansRejectsInvalidPage(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "1"}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/business-units/1/deploy-plans?page=x", nil)
+
+	ListBusinessUnitDeployPlans(c)
+
+	assertErrorMessage(t, w, "invalid page")
+}
+
+func TestListBusinessUnitDeployPlansRejectsInvalidPageSize(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "1"}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/business-units/1/deploy-plans?page_size=x", nil)
+
+	ListBusinessUnitDeployPlans(c)
+
+	assertErrorMessage(t, w, "invalid page_size")
+}
+
+func TestGetDeployPlanRejectsInvalidID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "bad-id"}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/deploy-plans/bad-id", nil)
+
+	GetDeployPlan(c)
+
+	assertErrorMessage(t, w, "invalid deploy plan id")
+}
+
+func TestUpdateDeployPlanRejectsInvalidID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "bad-id"}}
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/v1/deploy-plans/bad-id", nil)
+
+	UpdateDeployPlan(c)
+
+	assertErrorMessage(t, w, "invalid deploy plan id")
+}
+
+func TestDeleteDeployPlanRejectsInvalidID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "id", Value: "bad-id"}}
+	c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/deploy-plans/bad-id", nil)
+
+	DeleteDeployPlan(c)
+
+	assertErrorMessage(t, w, "invalid deploy plan id")
+}
+
 func TestGetCIConfigRejectsInvalidID(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)

@@ -17,6 +17,8 @@ func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	legacyGroup.POST("/instance-oams", api.CreateInstanceOAM)
 
 	v1.GET("/business-units/:id/ci-configs", api.ListBusinessUnitCIConfigs)
+	v1.GET("/business-units/:id/deploy-plans", api.ListBusinessUnitDeployPlans)
+	v1.POST("/business-units/:id/deploy-plans", api.CreateBusinessUnitDeployPlan)
 	v1.POST("/business-units/:id/ci-configs", api.CreateBusinessUnitCIConfig)
 	v1.GET("/business-units", api.ListBusinessUnits)
 	v1.POST("/business-units", api.CreateBusinessUnit)
@@ -27,6 +29,9 @@ func RegisterMetadataRoutes(v1 *gin.RouterGroup) {
 	v1.GET("/ci-configs/:id", api.GetCIConfig)
 	v1.PUT("/ci-configs/:id", api.UpdateCIConfig)
 	v1.DELETE("/ci-configs/:id", api.DeleteCIConfig)
+	v1.GET("/deploy-plans/:id", api.GetDeployPlan)
+	v1.PUT("/deploy-plans/:id", api.UpdateDeployPlan)
+	v1.DELETE("/deploy-plans/:id", api.DeleteDeployPlan)
 	v1.POST("/business-units/:id/instance-oams", api.CreateBusinessUnitInstanceOAM)
 	v1.GET("/business-units/:id/cd-configs", api.ListBusinessUnitCDConfigs)
 	v1.POST("/business-units/:id/cd-configs", api.CreateBusinessUnitCDConfig)

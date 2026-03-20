@@ -240,6 +240,39 @@ type DeployPlanVO struct {
 	InstanceOAMID  int64     `json:"instance_oam_id"`
 }
 
+type DeployPlanFrontendVO struct {
+	CreatedAt      time.Time `json:"created_at,omitempty"`
+	UpdatedAt      time.Time `json:"updated_at,omitempty"`
+	ID             int64  `json:"id"`
+	BusinessUnitID int64  `json:"business_unit_id"`
+	Name           string `json:"name"`
+	Description    string `json:"description,omitempty"`
+	CIConfigID     int64  `json:"ci_config_id,omitempty"`
+	CDConfigID     int64  `json:"cd_config_id,omitempty"`
+	InstanceOAMID  int64  `json:"instance_oam_id,omitempty"`
+	Env            string `json:"env"`
+	CIConfigName   string `json:"ci_config_name"`
+	CDConfigName   string `json:"cd_config_name"`
+	InstanceName   string `json:"instance_name"`
+	LastStatus     string `json:"last_status"`
+	LastTime       string `json:"last_time"`
+}
+
+type UpsertDeployPlanReq struct {
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	CIConfigID    int64  `json:"ci_config_id"`
+	CDConfigID    int64  `json:"cd_config_id"`
+	InstanceOAMID int64  `json:"instance_oam_id"`
+}
+
+type DeployPlanPageDTO struct {
+	Items    []DeployPlanFrontendVO `json:"items"`
+	Total    int64                  `json:"total"`
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"page_size"`
+}
+
 type DeployPlanAggregateVO struct {
 	Project      ProjectVO      `json:"project"`
 	BusinessUnit BusinessUnitVO `json:"business_unit"`

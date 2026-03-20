@@ -11,7 +11,7 @@ type app struct{}
 
 var App = new(app)
 
-func (s *app) GetDeployPlan(ctx context.Context, deployPlanID int64) (*vo.DeployPlanAggregateVO, error) {
+func (s *app) GetOpenModelDeployPlan(ctx context.Context, deployPlanID int64) (*vo.DeployPlanAggregateVO, error) {
 	aggregate, err := loadDeployPlanAggregate(ctx, deployPlanID)
 	if err != nil {
 		return nil, err
@@ -43,6 +43,26 @@ func (s *app) UpdateBusinessUnit(ctx context.Context, businessUnitID int64, req 
 
 func (s *app) DeleteBusinessUnit(ctx context.Context, businessUnitID int64) error {
 	return deleteBusinessUnit(ctx, businessUnitID)
+}
+
+func (s *app) ListBusinessUnitDeployPlans(ctx context.Context, businessUnitID int64, page int, pageSize int, keyword string) (*vo.DeployPlanPageDTO, error) {
+	return listBusinessUnitDeployPlans(ctx, businessUnitID, page, pageSize, keyword)
+}
+
+func (s *app) GetDeployPlan(ctx context.Context, deployPlanID int64) (*vo.DeployPlanFrontendVO, error) {
+	return getDeployPlan(ctx, deployPlanID)
+}
+
+func (s *app) CreateBusinessUnitDeployPlan(ctx context.Context, businessUnitID int64, req vo.UpsertDeployPlanReq) (*vo.DeployPlanFrontendVO, error) {
+	return createBusinessUnitDeployPlan(ctx, businessUnitID, req)
+}
+
+func (s *app) UpdateDeployPlan(ctx context.Context, deployPlanID int64, req vo.UpsertDeployPlanReq) (*vo.DeployPlanFrontendVO, error) {
+	return updateDeployPlan(ctx, deployPlanID, req)
+}
+
+func (s *app) DeleteDeployPlan(ctx context.Context, deployPlanID int64) error {
+	return deleteDeployPlan(ctx, deployPlanID)
 }
 
 func (s *app) ListBusinessUnitCIConfigs(ctx context.Context, businessUnitID int64, page int, pageSize int, keyword string) (*vo.CIConfigPageVO, error) {

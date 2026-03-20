@@ -58,7 +58,7 @@ func (s *Server) registerTools(server *mcp.Server) {
 		Name:        "get_open_model_deploy_plan",
 		Description: "Get open model deploy plan by deploy plan ID",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in getDeployPlanArgs) (*mcp.CallToolResult, any, error) {
-		res, err := metadata.App.GetDeployPlan(ctx, in.DeployPlanID)
+		res, err := metadata.App.GetOpenModelDeployPlan(ctx, in.DeployPlanID)
 		if err != nil {
 			return s.errorResult(err), nil, nil
 		}
